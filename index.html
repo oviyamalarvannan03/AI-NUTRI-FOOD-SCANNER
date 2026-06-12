@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriAI – AI Food Scanner & Disease Risk Prediction</title>
+  <meta name="description" content="Scan Food. Predict Risks. Live Healthier. AI-powered healthcare app with food scanning, disease risk prediction, and personalized recommendations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="frontend/styles.css" />
+  <!-- TensorFlow.js and MobileNet for client-side food scanning fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+</head>
+<body class="dark-mode" id="appBody">
+
+  <!-- App Shell -->
+  <div class="app-shell" id="appShell">
+
+    <!-- ========== SPLASH SCREEN ========== -->
+    <div class="screen active" id="screen-splash">
+      <div class="splash-bg">
+        <div class="neural-net-bg"></div>
+        <div class="splash-orb orb1"></div>
+        <div class="splash-orb orb2"></div>
+        <div class="splash-orb orb3"></div>
+        <div class="splash-content">
+          <div class="splash-logo-wrap">
+            <div class="splash-logo-ring ring-outer"></div>
+            <div class="splash-logo-ring ring-mid"></div>
+            <div class="splash-logo-ring ring-inner"></div>
+            <div class="splash-logo-core">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path d="M24 4C24 4 36 12 36 24C36 36 24 44 24 44C24 44 12 36 12 24C12 12 24 4 24 4Z" fill="url(#lg1)" opacity="0.9"/>
+                <circle cx="24" cy="24" r="8" fill="white" opacity="0.95"/>
+                <circle cx="24" cy="24" r="4" fill="url(#lg2)"/>
+                <defs>
+                  <linearGradient id="lg1" x1="12" y1="4" x2="36" y2="44" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#3B82F6"/>
+                    <stop offset="1" stop-color="#7C3AED"/>
+                  </linearGradient>
+                  <linearGradient id="lg2" x1="20" y1="20" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#10B981"/>
+                    <stop offset="1" stop-color="#3B82F6"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+          <h1 class="splash-title">NutriAI</h1>
+          <p class="splash-tagline">Scan Food. Predict Risks. Live Healthier.</p>
+          <div class="splash-loader">
+            <div class="loader-bar"><div class="loader-fill"></div></div>
+            <span class="loader-text">Initializing AI Engine...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ONBOARDING SCREENS ========== -->
+    <div class="screen" id="screen-onboarding">
+      <div class="onboarding-wrap">
+        <div class="onboarding-slides" id="onboardingSlides">
+
+          <!-- Slide 1 -->
+          <div class="ob-slide active" id="ob-0">
+            <div class="ob-illustration">
+              <div class="ob-circle-bg"></div>
+              <div class="ob-icon-ring">
+                <div class="ob-icon">🔬</div>
+              </div>
+              <div class="ob-floating-tags">
+                <span class="ob-tag tag1">Pizza 🍕</span>
+                <span class="ob-tag tag2">900 kcal</span>
+                <span class="ob-tag tag3">AI ✓</span>
+              </div>
+            </div>
+            <div class="ob-text">
+              <h2>AI Food Scanning</h2>
+              <p>Point your camera at any food. Our YOLO-powered AI identifies ingredients, calories, and nutrients in under a second.</p>
+            </div>
+          </div>
+
+          <!-- Slide 2 -->
+          <div class="ob-slide" id="ob-1">
+            <div class="ob-illustration">
+              <div class="ob-circle-bg green"></div>
+              <div class="ob-icon-ring green">
+                <div class="ob-icon">📊</div>
+              </div>
+              <div class="ob-floating-tags">
+                <span class="ob-tag tag1 green">Protein 28g</span>
+                <span class="ob-tag tag2 green">Carbs 45g</span>
+                <span class="ob-tag tag3 green">Fat 12g</span>
+              </div>
+            </div>
+            <div class="ob-text">
+              <h2>Deep Nutrition Analysis</h2>
+              <p>Get detailed macros, micros, vitamins, and minerals. Understand exactly what goes into your body with AI-powered breakdown.</p>
+            </div>
+          </div>
+
+          <!-- Slide 3 -->
+          <div class="ob-slide" id="ob-2">
+            <div class="ob-illustration">
+              <div class="ob-circle-bg purple"></div>
+              <div class="ob-icon-ring purple">
+                <div class="ob-icon">🧠</div>
+              </div>
+              <div class="ob-floating-tags">
+                <span class="ob-tag tag1 purple">Diabetes 12%</span>
+                <span class="ob-tag tag2 purple">Heart 8%</span>
+                <span class="ob-tag tag3 purple">Low Risk</span>
+              </div>
+            </div>
+            <div class="ob-text">
+              <h2>Disease Risk Prediction</h2>
+              <p>Our Random Forest & CNN models predict your risk for diabetes, heart disease, obesity, and hypertension based on your diet.</p>
+            </div>
+          </div>
+
+          <!-- Slide 4 -->
+          <div class="ob-slide" id="ob-3">
+            <div class="ob-illustration">
+              <div class="ob-circle-bg teal"></div>
+              <div class="ob-icon-ring teal">
+                <div class="ob-icon">💡</div>
+              </div>
+              <div class="ob-floating-tags">
+                <span class="ob-tag tag1 teal">Eat Salad</span>
+                <span class="ob-tag tag2 teal">Drink 2L</span>
+                <span class="ob-tag tag3 teal">Walk 30m</span>
+              </div>
+            </div>
+            <div class="ob-text">
+              <h2>Personalized AI Recommendations</h2>
+              <p>Your AI health coach crafts daily meal plans, exercise suggestions, and lifestyle improvements tailored uniquely to you.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Dots -->
+        <div class="ob-dots">
+          <span class="ob-dot active" data-idx="0"></span>
+          <span class="ob-dot" data-idx="1"></span>
+          <span class="ob-dot" data-idx="2"></span>
+          <span class="ob-dot" data-idx="3"></span>
+        </div>
+
+        <div class="ob-actions">
+          <button class="btn-ghost" id="ob-skip">Skip</button>
+          <button class="btn-primary" id="ob-next">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LOGIN SCREEN ========== -->
+    <div class="screen" id="screen-login">
+      <div class="auth-bg">
+        <div class="auth-orb auth-orb1"></div>
+        <div class="auth-orb auth-orb2"></div>
+      </div>
+      <div class="auth-container">
+        <div class="auth-logo">
+          <div class="auth-logo-icon">🧬</div>
+          <h2>NutriAI</h2>
+        </div>
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-sub">Sign in to continue your health journey</p>
+
+        <div class="social-btns">
+          <button class="social-btn google-btn" id="googleSignIn">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#EA4335" d="M5.27 9.76A7.08 7.08 0 0 1 19.07 12h-7.1v2.73h4.07a3.49 3.49 0 0 1-1.52 2.29v1.9h2.46A7.44 7.44 0 0 0 19.07 12c0-.5-.05-1-.13-1.46H12v2.73h4.07a3.49 3.49 0 0 1-1.52 2.29v1.9h2.46A7.44 7.44 0 0 0 19.07 12 7.07 7.07 0 0 0 12 4.93 7.08 7.08 0 0 0 5.27 9.76z"/><path fill="#34A853" d="M5.27 9.76A7.08 7.08 0 0 0 4.93 12a7.07 7.07 0 0 0 .34 2.24l2.48-1.93A4.3 4.3 0 0 1 7.57 12a4.3 4.3 0 0 1 .18-1.31z"/><path fill="#FBBC05" d="M12 7.57a3.84 3.84 0 0 1 2.71 1.06l2.03-2.03A6.8 6.8 0 0 0 12 4.93a7.08 7.08 0 0 0-6.73 4.83l2.48 1.93A4.22 4.22 0 0 1 12 7.57z"/><path fill="#EA4335" d="M7.75 14.07 5.27 16a7.08 7.08 0 0 0 6.73 3.07 6.8 6.8 0 0 0 4.74-1.94l-2.46-1.9a4.3 4.3 0 0 1-6.53-1.16z"/></svg>
+            Continue with Google
+          </button>
+          <button class="social-btn apple-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z"/></svg>
+            Continue with Apple
+          </button>
+        </div>
+
+        <div class="auth-divider"><span>or sign in with email</span></div>
+
+        <form class="auth-form" id="loginForm">
+          <div class="form-group">
+            <label>Email Address</label>
+            <div class="input-wrap">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="loginEmail" placeholder="you@example.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="loginPassword" placeholder="••••••••" required />
+              <button type="button" class="eye-toggle" id="togglePass">👁</button>
+            </div>
+          </div>
+          <div class="auth-options">
+            <label class="checkbox-wrap">
+              <input type="checkbox" /> Remember me
+            </label>
+            <a class="link" href="#" onclick="navigateTo('screen-forgot')">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn-primary full" id="loginBtn">Sign In</button>
+        </form>
+
+        <div class="faceid-section">
+          <button class="faceid-btn" id="faceIdBtn">
+            <div class="faceid-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <rect x="2" y="2" width="8" height="3" rx="1.5" fill="#3B82F6"/>
+                <rect x="22" y="2" width="8" height="3" rx="1.5" fill="#3B82F6"/>
+                <rect x="2" y="27" width="8" height="3" rx="1.5" fill="#3B82F6"/>
+                <rect x="22" y="27" width="8" height="3" rx="1.5" fill="#3B82F6"/>
+                <circle cx="11" cy="13" r="2" fill="#3B82F6"/>
+                <circle cx="21" cy="13" r="2" fill="#3B82F6"/>
+                <path d="M10 20 Q16 25 22 20" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <path d="M13 17 L13 19" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M16 17 L16 19" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M19 17 L19 19" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            Sign in with Face ID
+          </button>
+        </div>
+
+        <p class="auth-switch">Don't have an account? <a class="link" href="#" onclick="navigateTo('screen-signup')">Sign Up</a></p>
+      </div>
+    </div>
+
+    <!-- ========== SIGNUP SCREEN ========== -->
+    <div class="screen" id="screen-signup">
+      <div class="auth-bg"><div class="auth-orb auth-orb1 green"></div><div class="auth-orb auth-orb2 green"></div></div>
+      <div class="auth-container">
+        <div class="auth-back" onclick="navigateTo('screen-login')">← Back</div>
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-sub">Start your AI health journey today</p>
+        <form class="auth-form" id="signupForm">
+          <div class="form-group">
+            <label>Full Name</label>
+            <div class="input-wrap"><span class="input-icon">👤</span><input type="text" placeholder="Your full name" required /></div>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <div class="input-wrap"><span class="input-icon">✉️</span><input type="email" placeholder="you@example.com" required /></div>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <div class="input-wrap"><span class="input-icon">🔒</span><input type="password" placeholder="Create a strong password" required minlength="6" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label>Age</label>
+              <div class="input-wrap"><input type="number" placeholder="25" /></div>
+            </div>
+            <div class="form-group half">
+              <label>Gender</label>
+              <div class="input-wrap">
+                <select><option>Male</option><option>Female</option><option>Other</option></select>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary full">Create Account →</button>
+        </form>
+        <p class="auth-switch">Already have an account? <a class="link" href="#" onclick="navigateTo('screen-login')">Sign In</a></p>
+      </div>
+    </div>
+
+    <!-- ========== OTP VERIFICATION ========== -->
+    <div class="screen" id="screen-otp">
+      <div class="auth-bg"><div class="auth-orb auth-orb1 purple"></div></div>
+      <div class="auth-container center">
+        <div class="auth-back" onclick="navigateTo('screen-signup')">← Back</div>
+        <div class="otp-icon">📱</div>
+        <h1 class="auth-title">Verify OTP</h1>
+        <p class="auth-sub">We sent a 6-digit code to<br/><strong>you@example.com</strong></p>
+        <div class="otp-inputs">
+          <input class="otp-box" maxlength="1" type="text" />
+          <input class="otp-box" maxlength="1" type="text" />
+          <input class="otp-box" maxlength="1" type="text" />
+          <input class="otp-box" maxlength="1" type="text" />
+          <input class="otp-box" maxlength="1" type="text" />
+          <input class="otp-box" maxlength="1" type="text" />
+        </div>
+        <button class="btn-primary full" onclick="navigateTo('screen-home')">Verify & Continue</button>
+        <p class="resend-txt">Didn't receive? <a class="link" href="#">Resend in 30s</a></p>
+      </div>
+    </div>
+
+    <!-- ========== FORGOT PASSWORD ========== -->
+    <div class="screen" id="screen-forgot">
+      <div class="auth-bg"></div>
+      <div class="auth-container">
+        <div class="auth-back" onclick="navigateTo('screen-login')">← Back</div>
+        <div class="otp-icon">🔑</div>
+        <h1 class="auth-title">Reset Password</h1>
+        <p class="auth-sub">Enter your email and we'll send you a reset link</p>
+        <form class="auth-form" id="forgotForm">
+          <div class="form-group">
+            <label>Email Address</label>
+            <div class="input-wrap"><span class="input-icon">✉️</span><input type="email" id="forgotEmail" placeholder="you@example.com" required /></div>
+          </div>
+          <button type="submit" class="btn-primary full">Send Reset Link</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========== HOME DASHBOARD ========== -->
+    <div class="screen" id="screen-home">
+      <div class="home-header">
+        <div class="home-greeting">
+          <div class="avatar-wrap">
+            <div class="avatar">U</div>
+            <div class="avatar-ring"></div>
+          </div>
+          <div>
+            <p class="greeting-sub">Good Morning, 👋</p>
+            <h2 class="greeting-name">User</h2>
+          </div>
+        </div>
+        <button class="notif-btn" onclick="navigateTo('screen-alerts')">
+          <span class="notif-dot"></span>🔔
+        </button>
+      </div>
+
+      <div class="home-scroll">
+        <!-- AI Health Score -->
+        <div class="health-score-card glass-card" onclick="navigateTo('screen-risk')">
+          <div class="hsc-left">
+            <p class="hsc-label">AI Health Score</p>
+            <div class="hsc-score">87<span>/100</span></div>
+            <span class="badge badge-green">Excellent</span>
+          </div>
+          <div class="hsc-ring-wrap">
+            <svg viewBox="0 0 100 100" width="100" height="100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="url(#scoreGrad)" stroke-width="8"
+                stroke-dasharray="218" stroke-dashoffset="28" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+              <defs>
+                <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#10B981"/>
+                  <stop offset="100%" stop-color="#3B82F6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="hsc-ring-num">87%</span>
+          </div>
+        </div>
+
+        <!-- Quick Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card glass-card-sm" onclick="navigateTo('screen-analytics')">
+            <div class="stat-icon calories">🔥</div>
+            <div class="stat-val">1,840</div>
+            <div class="stat-label">Calories</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:73%; background: linear-gradient(90deg,#F59E0B,#EF4444)"></div></div>
+          </div>
+          <div class="stat-card glass-card-sm">
+            <div class="stat-icon water">💧</div>
+            <div class="stat-val">1.6L</div>
+            <div class="stat-label">Hydration</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:64%; background: linear-gradient(90deg,#3B82F6,#06B6D4)"></div></div>
+          </div>
+          <div class="stat-card glass-card-sm">
+            <div class="stat-icon steps">👟</div>
+            <div class="stat-val">7,234</div>
+            <div class="stat-label">Steps</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:72%; background: linear-gradient(90deg,#10B981,#6EE7B7)"></div></div>
+          </div>
+          <div class="stat-card glass-card-sm" onclick="navigateTo('screen-wearable')">
+            <div class="stat-icon heart">❤️</div>
+            <div class="stat-val">72</div>
+            <div class="stat-label">BPM</div>
+            <div class="stat-bar"><div class="stat-bar-fill" style="width:55%; background: linear-gradient(90deg,#EF4444,#F43F5E)"></div></div>
+          </div>
+        </div>
+
+        <!-- Scan Button CTA -->
+        <div class="scan-cta glass-card" onclick="navigateTo('screen-scanner')">
+          <div class="scan-cta-left">
+            <p class="scan-cta-label">Ready to Scan?</p>
+            <h3 class="scan-cta-title">Analyze Your Food with AI</h3>
+            <button class="btn-primary sm">📸 Scan Now</button>
+          </div>
+          <div class="scan-cta-icon">
+            <div class="scan-pulse-ring"></div>
+            <div class="scan-pulse-ring r2"></div>
+            <span>🔬</span>
+          </div>
+        </div>
+
+        <!-- Risk Summary Cards -->
+        <div class="section-header">
+          <h3>Disease Risk Summary</h3>
+          <a class="link sm" onclick="navigateTo('screen-risk')">See All →</a>
+        </div>
+        <div class="risk-cards-row">
+          <div class="risk-mini-card low" onclick="navigateTo('screen-risk')">
+            <div class="risk-mini-label">Diabetes</div>
+            <div class="risk-mini-val">12%</div>
+            <div class="risk-mini-badge low">Low</div>
+          </div>
+          <div class="risk-mini-card medium" onclick="navigateTo('screen-risk')">
+            <div class="risk-mini-label">Heart</div>
+            <div class="risk-mini-val">28%</div>
+            <div class="risk-mini-badge medium">Medium</div>
+          </div>
+          <div class="risk-mini-card low" onclick="navigateTo('screen-risk')">
+            <div class="risk-mini-label">Obesity</div>
+            <div class="risk-mini-val">8%</div>
+            <div class="risk-mini-badge low">Low</div>
+          </div>
+          <div class="risk-mini-card low" onclick="navigateTo('screen-risk')">
+            <div class="risk-mini-label">BP</div>
+            <div class="risk-mini-val">15%</div>
+            <div class="risk-mini-badge low">Low</div>
+          </div>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="section-header">
+          <h3>AI Insights</h3>
+        </div>
+        <div class="insight-card glass-card" onclick="navigateTo('screen-chatbot')">
+          <div class="insight-badge">🤖 AI Says</div>
+          <p class="insight-text">"Your sugar intake today is 18g above target. Consider switching to fruits for your evening snack to reduce diabetes risk."</p>
+          <div class="insight-actions">
+            <button class="btn-ghost xs">Learn More</button>
+            <button class="btn-primary xs" onclick="event.stopPropagation(); navigateTo('screen-recommendations')">See Alternatives</button>
+          </div>
+        </div>
+
+        <!-- Indian Food Swaps CTA -->
+        <div class="desi-swap-cta glass-card" onclick="navigateTo('screen-indian-swaps')">
+          <div class="desi-swap-cta-badge">🇮🇳 Desi AI Swap Engine</div>
+          <h3 class="desi-swap-cta-title">Swap Junk for Healthy Indian Superfoods</h3>
+          <p class="desi-swap-cta-text">Scan junk, and instantly swap it for high-protein, high-fiber traditional Indian equivalents.</p>
+          <div class="desi-swap-cta-foot">
+            <span class="desi-swap-cta-arrow">Try Desi Swaps ➔</span>
+            <div class="desi-swap-floating-emojis">
+              <span class="f-emoji e1">🍕 ➔ 🥞</span>
+              <span class="f-emoji e2">🥤 ➔ 🥛</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Summary Mini Chart -->
+        <div class="section-header"><h3>Weekly Progress</h3><a class="link sm" onclick="navigateTo('screen-analytics')">Full Report →</a></div>
+        <div class="weekly-chart glass-card">
+          <div class="chart-bars">
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:65%; background:linear-gradient(180deg,#3B82F6,#7C3AED)"></div><span>Mon</span></div>
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:80%; background:linear-gradient(180deg,#10B981,#3B82F6)"></div><span>Tue</span></div>
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:55%; background:linear-gradient(180deg,#F59E0B,#EF4444)"></div><span>Wed</span></div>
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:90%; background:linear-gradient(180deg,#10B981,#3B82F6)"></div><span>Thu</span></div>
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:70%; background:linear-gradient(180deg,#3B82F6,#7C3AED)"></div><span>Fri</span></div>
+            <div class="chart-bar-wrap today"><div class="chart-bar" style="height:73%; background:linear-gradient(180deg,#10B981,#3B82F6)"></div><span>Today</span></div>
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:20%; background:rgba(255,255,255,0.15)"></div><span>Sun</span></div>
+          </div>
+        </div>
+
+        <!-- Gamification Teaser -->
+        <div class="gamification-teaser glass-card" onclick="navigateTo('screen-gamification')">
+          <div class="game-left">
+            <p>🏆 Health Streak</p>
+            <h3>14 Days Strong!</h3>
+            <div class="streak-badges">
+              <span>🔥</span><span>⭐</span><span>💪</span><span>🥗</span>
+            </div>
+          </div>
+          <div class="game-right">
+            <div class="xp-ring">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="url(#xpGrad)" stroke-width="6"
+                  stroke-dasharray="188" stroke-dashoffset="47" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                <defs><linearGradient id="xpGrad" x1="0%" y1="0%" x2="100%"><stop offset="0%" stop-color="#F59E0B"/><stop offset="100%" stop-color="#EF4444"/></linearGradient></defs>
+              </svg>
+              <span class="xp-text">75%</span>
+            </div>
+            <p class="xp-label">Level 8</p>
+          </div>
+        </div>
+
+        <!-- Community Teaser -->
+        <div class="community-teaser glass-card" onclick="navigateTo('screen-community')">
+          <div>
+            <p class="community-label">🌍 Community Challenge</p>
+            <h3>10K Steps Daily – Week 3</h3>
+            <p class="community-sub">1,284 participants · You're in Top 20%</p>
+          </div>
+          <button class="btn-primary sm">Join →</button>
+        </div>
+
+        <div style="height: 80px;"></div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <nav class="bottom-nav">
+        <button class="nav-item active" onclick="navigateTo('screen-home')"><span>🏠</span><span>Home</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-scanner')"><span>🔬</span><span>Scan</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-analytics')"><span>📊</span><span>Analytics</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-chatbot')"><span>🤖</span><span>AI Chat</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-profile')"><span>👤</span><span>Profile</span></button>
+      </nav>
+    </div>
+
+    <!-- ========== AI FOOD SCANNER ========== -->
+    <div class="screen" id="screen-scanner">
+      <div class="scanner-wrap">
+        <div class="scanner-header">
+          <button class="back-btn" onclick="navigateTo('screen-home')">←</button>
+          <h2>AI Food Scanner</h2>
+          <button class="icon-btn flash-btn" id="flashBtn">⚡</button>
+        </div>
+        <div class="scanner-viewport">
+          <div class="scanner-frame">
+            <video id="scannerVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; display: none;"></video>
+            <img id="scannerImagePreview" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; border-radius: 12px; display: none;" />
+            <div class="corner tl"></div><div class="corner tr"></div>
+            <div class="corner bl"></div><div class="corner br"></div>
+            <div class="scan-line" id="scanLine" style="z-index: 2;"></div>
+            <!-- Detection boxes -->
+            <div class="detection-box" style="top:30%; left:20%; width:45%; height:40%; z-index: 3; display: none;">
+              <span class="det-label">🍕 Pizza – 87%</span>
+            </div>
+            <div class="detection-box secondary" style="top:65%; left:55%; width:25%; height:20%; z-index: 3; display: none;">
+              <span class="det-label secondary">🥤 Cola – 92%</span>
+            </div>
+          </div>
+          <div class="scanner-overlay-ui">
+            <div class="ai-tag yolo">YOLO v8 Active</div>
+            <div class="ai-tag ml">MobileNet 2.0</div>
+          </div>
+          <input type="file" id="scannerFileInput" accept="image/*" style="display: none;" />
+          <div class="scanner-bg-gradient"></div>
+        </div>
+        <div class="scanner-bottom">
+          <div class="scanner-actions-row" style="display: flex; gap: 12px; width: 100%; justify-content: center; margin-bottom: 8px;">
+            <button class="btn-primary sm" id="startCameraBtn" style="flex: 1; border-radius: 20px; font-size: 0.8rem; background: linear-gradient(135deg, #3B82F6, #1D4ED8);">📷 Live Camera</button>
+            <button class="btn-ghost sm" id="uploadImageBtn" style="flex: 1; border-radius: 20px; font-size: 0.8rem; border-color: rgba(255,255,255,0.3); color: white;">📁 Upload Photo</button>
+          </div>
+          <div class="scan-progress-wrap" style="display: none;">
+            <div class="scan-progress-bar"><div class="scan-progress-fill" id="scanProgress"></div></div>
+            <span class="scan-progress-txt">Analyzing food... 78%</span>
+          </div>
+          <button class="scan-trigger-btn" id="scanTrigger" style="margin-top: 4px;">
+            <div class="scan-trigger-inner">📸</div>
+          </button>
+          <div class="scan-history-row">
+            <p class="scan-hist-label">Recent Scans</p>
+            <div class="scan-thumbs">
+              <div class="scan-thumb">🍎</div>
+              <div class="scan-thumb">🥑</div>
+              <div class="scan-thumb">🍗</div>
+              <div class="scan-thumb">🥗</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== FOOD ANALYSIS RESULT ========== -->
+    <div class="screen" id="screen-food-result">
+      <div class="result-header">
+        <button class="back-btn" onclick="navigateTo('screen-scanner')">←</button>
+        <h2>Food Analysis</h2>
+        <button class="icon-btn" onclick="navigateTo('screen-risk')">🧠</button>
+      </div>
+      <div class="result-scroll">
+        <!-- Food Preview Card -->
+        <div class="food-preview-card glass-card">
+          <div class="food-emoji-big">🍕</div>
+          <div class="food-info">
+            <h2 class="food-name">Pepperoni Pizza</h2>
+            <p class="food-sub">2 slices · Medium crust</p>
+            <div class="food-badges">
+              <span class="badge badge-warn">⚠️ High Sodium</span>
+              <span class="badge badge-warn">🔴 High Calorie</span>
+            </div>
+          </div>
+          <div class="food-score">
+            <div class="food-score-ring">
+              <svg viewBox="0 0 60 60" width="60" height="60">
+                <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="5"/>
+                <circle cx="30" cy="30" r="24" fill="none" stroke="#EF4444" stroke-width="5"
+                  stroke-dasharray="150" stroke-dashoffset="82" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+              </svg>
+              <span class="food-score-num">45</span>
+            </div>
+            <p class="food-score-label">Health Score</p>
+          </div>
+        </div>
+
+        <!-- Calorie Section -->
+        <div class="calorie-section glass-card">
+          <h3>Calories</h3>
+          <div class="calorie-big">892 <span>kcal</span></div>
+          <p class="calorie-sub">44.6% of your daily goal (2000 kcal)</p>
+          <div class="calorie-bar-wrap">
+            <div class="calorie-bar"><div class="calorie-fill" style="width:44.6%"></div></div>
+          </div>
+        </div>
+
+        <!-- Macros Pie Chart -->
+        <div class="macros-section glass-card">
+          <h3>Macronutrients</h3>
+          <div class="macros-layout">
+            <div class="pie-chart-wrap">
+              <svg viewBox="0 0 100 100" width="130" height="130">
+                <circle r="40" cx="50" cy="50" fill="transparent" stroke="#EF4444" stroke-width="20" stroke-dasharray="95 157" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                <circle r="40" cx="50" cy="50" fill="transparent" stroke="#3B82F6" stroke-width="20" stroke-dasharray="65 187" stroke-dashoffset="-95" transform="rotate(-90 50 50)"/>
+                <circle r="40" cx="50" cy="50" fill="transparent" stroke="#10B981" stroke-width="20" stroke-dasharray="92 160" stroke-dashoffset="-160" transform="rotate(-90 50 50)"/>
+                <text x="50" y="54" text-anchor="middle" font-size="10" fill="white" font-weight="bold">Macros</text>
+              </svg>
+            </div>
+            <div class="macro-legend">
+              <div class="macro-item">
+                <span class="macro-dot" style="background:#EF4444"></span>
+                <span class="macro-name">Carbs</span>
+                <span class="macro-val">98g</span>
+              </div>
+              <div class="macro-item">
+                <span class="macro-dot" style="background:#3B82F6"></span>
+                <span class="macro-name">Fat</span>
+                <span class="macro-val">36g</span>
+              </div>
+              <div class="macro-item">
+                <span class="macro-dot" style="background:#10B981"></span>
+                <span class="macro-name">Protein</span>
+                <span class="macro-val">42g</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nutrition Bars -->
+        <div class="nutrition-detail glass-card">
+          <h3>Detailed Nutrients</h3>
+          <div class="nutr-list">
+            <div class="nutr-item"><span class="nutr-name">Sodium</span><div class="nutr-bar-wrap"><div class="nutr-bar" style="width:78%; background:linear-gradient(90deg,#EF4444,#F97316)"></div></div><span class="nutr-val warn">1820mg ⚠️</span></div>
+            <div class="nutr-item"><span class="nutr-name">Sugar</span><div class="nutr-bar-wrap"><div class="nutr-bar" style="width:45%; background:linear-gradient(90deg,#F59E0B,#EF4444)"></div></div><span class="nutr-val warn">9g</span></div>
+            <div class="nutr-item"><span class="nutr-name">Fiber</span><div class="nutr-bar-wrap"><div class="nutr-bar" style="width:20%; background:linear-gradient(90deg,#10B981,#6EE7B7)"></div></div><span class="nutr-val">2g</span></div>
+            <div class="nutr-item"><span class="nutr-name">Cholesterol</span><div class="nutr-bar-wrap"><div class="nutr-bar" style="width:55%; background:linear-gradient(90deg,#F97316,#EF4444)"></div></div><span class="nutr-val warn">64mg</span></div>
+            <div class="nutr-item"><span class="nutr-name">Vitamin A</span><div class="nutr-bar-wrap"><div class="nutr-bar" style="width:30%; background:linear-gradient(90deg,#3B82F6,#7C3AED)"></div></div><span class="nutr-val">15%</span></div>
+            <div class="nutr-item"><span class="nutr-name">Calcium</span><div class="nutr-bar-wrap"><div class="nutr-bar" style="width:35%; background:linear-gradient(90deg,#10B981,#3B82F6)"></div></div><span class="nutr-val">210mg</span></div>
+          </div>
+        </div>
+
+        <!-- AI Recommendation -->
+        <div class="ai-rec-card glass-card" onclick="navigateTo('screen-recommendations')">
+          <div class="ai-rec-header">
+            <span>🤖 AI Recommendation</span>
+            <span class="badge badge-purple">Personalized</span>
+          </div>
+          <p class="ai-rec-text">This meal is high in sodium and calories. Consider eating a smaller portion or swapping for a whole-grain veggie pizza to reduce heart disease risk.</p>
+          <div class="rec-button-row" style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn-primary sm" style="flex:1;" onclick="event.stopPropagation(); navigateTo('screen-recommendations')">Alternatives →</button>
+            <button class="btn-ghost sm" style="flex:1.2; border-color:#10B981; color:#10B981;" onclick="event.stopPropagation(); navigateTo('screen-indian-swaps')">🇮🇳 Desi Swaps →</button>
+          </div>
+        </div>
+
+        <button class="btn-primary full" onclick="navigateTo('screen-risk')" style="margin: 0 16px 16px;">🧠 Check Disease Risk</button>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== DISEASE RISK PREDICTION ========== -->
+    <div class="screen" id="screen-risk">
+      <div class="risk-header">
+        <button class="back-btn" onclick="navigateTo('screen-home')">←</button>
+        <h2>Disease Risk Prediction</h2>
+        <button class="icon-btn" onclick="navigateTo('screen-analytics')">📊</button>
+      </div>
+      <div class="risk-scroll">
+        <!-- AI Model Badge -->
+        <div class="ai-models-row">
+          <div class="ai-model-chip"><span>🧠</span>CNN</div>
+          <div class="ai-model-chip"><span>📱</span>MobileNet</div>
+          <div class="ai-model-chip"><span>🌳</span>R. Forest</div>
+          <div class="ai-model-chip"><span>⚡</span>TF Lite</div>
+        </div>
+
+        <!-- Overall Risk Score -->
+        <div class="overall-risk glass-card">
+          <h3>Overall Health Risk</h3>
+          <div class="overall-ring-wrap">
+            <svg viewBox="0 0 150 150" width="150" height="150">
+              <circle cx="75" cy="75" r="60" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12"/>
+              <circle cx="75" cy="75" r="60" fill="none" stroke="url(#riskGrad)" stroke-width="12"
+                stroke-dasharray="376" stroke-dashoffset="244" stroke-linecap="round" transform="rotate(-90 75 75)"/>
+              <defs>
+                <linearGradient id="riskGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#10B981"/>
+                  <stop offset="100%" stop-color="#F59E0B"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="overall-ring-text">
+              <div class="overall-pct">35%</div>
+              <div class="overall-label">Moderate</div>
+            </div>
+          </div>
+          <p class="overall-sub">Based on your last 7 days of food scans and health data</p>
+          <div class="ai-confidence">
+            <span>AI Confidence:</span>
+            <div class="conf-bar"><div class="conf-fill" style="width:94%"></div></div>
+            <span class="conf-val">94%</span>
+          </div>
+        </div>
+
+        <!-- Individual Risk Cards -->
+        <div class="section-header"><h3>Individual Risk Factors</h3></div>
+
+        <div class="risk-detail-card glass-card low" onclick="navigateTo('screen-risk-detail')">
+          <div class="risk-d-top">
+            <div class="risk-d-icon">🩸</div>
+            <div class="risk-d-info">
+              <h4>Diabetes Risk</h4>
+              <p>Type 2 Diabetes Mellitus</p>
+            </div>
+            <span class="risk-badge low">LOW</span>
+          </div>
+          <div class="risk-d-ring-row">
+            <div class="risk-d-ring">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#10B981" stroke-width="7"
+                  stroke-dasharray="188" stroke-dashoffset="166" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <span class="risk-d-pct">12%</span>
+            </div>
+            <div class="risk-d-factors">
+              <p class="factor-item good">✅ Low sugar today</p>
+              <p class="factor-item good">✅ Active lifestyle</p>
+              <p class="factor-item warn">⚠️ High carb intake</p>
+            </div>
+          </div>
+          <div class="risk-trend">
+            <span>↓ Improved 4% this week</span>
+            <div class="mini-sparkline">
+              <svg viewBox="0 0 80 30" width="80" height="30">
+                <polyline fill="none" stroke="#10B981" stroke-width="2" points="0,20 15,18 30,22 45,15 60,10 80,12"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="risk-detail-card glass-card medium">
+          <div class="risk-d-top">
+            <div class="risk-d-icon">❤️</div>
+            <div class="risk-d-info">
+              <h4>Heart Disease Risk</h4>
+              <p>Cardiovascular Disease</p>
+            </div>
+            <span class="risk-badge medium">MEDIUM</span>
+          </div>
+          <div class="risk-d-ring-row">
+            <div class="risk-d-ring">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#F59E0B" stroke-width="7"
+                  stroke-dasharray="188" stroke-dashoffset="135" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <span class="risk-d-pct" style="color:#F59E0B">28%</span>
+            </div>
+            <div class="risk-d-factors">
+              <p class="factor-item warn">⚠️ High sodium (pizza)</p>
+              <p class="factor-item warn">⚠️ Cholesterol 64mg</p>
+              <p class="factor-item good">✅ BMI normal</p>
+            </div>
+          </div>
+          <div class="risk-trend" style="color:#F59E0B">
+            <span>↑ Increased 2% (sodium spike)</span>
+          </div>
+        </div>
+
+        <div class="risk-detail-card glass-card low">
+          <div class="risk-d-top">
+            <div class="risk-d-icon">⚖️</div>
+            <div class="risk-d-info">
+              <h4>Obesity Risk</h4>
+              <p>BMI & Body Composition</p>
+            </div>
+            <span class="risk-badge low">LOW</span>
+          </div>
+          <div class="risk-d-ring-row">
+            <div class="risk-d-ring">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#10B981" stroke-width="7"
+                  stroke-dasharray="188" stroke-dashoffset="173" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <span class="risk-d-pct">8%</span>
+            </div>
+            <div class="risk-d-factors">
+              <p class="factor-item good">✅ BMI 22.4 (Normal)</p>
+              <p class="factor-item good">✅ Active – 7234 steps</p>
+              <p class="factor-item good">✅ Calorie balance</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="risk-detail-card glass-card low">
+          <div class="risk-d-top">
+            <div class="risk-d-icon">🫀</div>
+            <div class="risk-d-info">
+              <h4>Blood Pressure Risk</h4>
+              <p>Hypertension</p>
+            </div>
+            <span class="risk-badge low">LOW</span>
+          </div>
+          <div class="risk-d-ring-row">
+            <div class="risk-d-ring">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="7"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#3B82F6" stroke-width="7"
+                  stroke-dasharray="188" stroke-dashoffset="160" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <span class="risk-d-pct" style="color:#3B82F6">15%</span>
+            </div>
+            <div class="risk-d-factors">
+              <p class="factor-item warn">⚠️ Sodium intake high</p>
+              <p class="factor-item good">✅ BP: 118/76 mmHg</p>
+              <p class="factor-item good">✅ Stress: Low</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Neural Network Visualization -->
+        <div class="nn-viz-card glass-card">
+          <h3>🧠 Neural Network Analysis</h3>
+          <p class="nn-sub">CNN + Random Forest ensemble processing your health data</p>
+          <div class="nn-diagram">
+            <div class="nn-layer input-layer">
+              <div class="nn-node"></div><div class="nn-node"></div><div class="nn-node"></div><div class="nn-node"></div>
+              <span class="nn-layer-label">Input</span>
+            </div>
+            <div class="nn-connections">
+              <svg viewBox="0 0 80 100" width="80" height="100" style="overflow:visible">
+                <line x1="0" y1="12" x2="80" y2="25" stroke="url(#nnGrad)" stroke-width="1.5" opacity="0.6"/>
+                <line x1="0" y1="37" x2="80" y2="25" stroke="url(#nnGrad)" stroke-width="1.5" opacity="0.6"/>
+                <line x1="0" y1="62" x2="80" y2="50" stroke="url(#nnGrad)" stroke-width="1.5" opacity="0.6"/>
+                <line x1="0" y1="87" x2="80" y2="75" stroke="url(#nnGrad)" stroke-width="1.5" opacity="0.6"/>
+                <line x1="0" y1="12" x2="80" y2="75" stroke="url(#nnGrad)" stroke-width="1" opacity="0.3"/>
+                <line x1="0" y1="62" x2="80" y2="25" stroke="url(#nnGrad)" stroke-width="1" opacity="0.3"/>
+                <defs><linearGradient id="nnGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs>
+              </svg>
+            </div>
+            <div class="nn-layer hidden-layer">
+              <div class="nn-node active"></div><div class="nn-node active"></div><div class="nn-node"></div>
+              <span class="nn-layer-label">Hidden</span>
+            </div>
+            <div class="nn-connections">
+              <svg viewBox="0 0 80 100" width="80" height="100" style="overflow:visible">
+                <line x1="0" y1="25" x2="80" y2="50" stroke="url(#nnGrad2)" stroke-width="1.5" opacity="0.6"/>
+                <line x1="0" y1="50" x2="80" y2="50" stroke="url(#nnGrad2)" stroke-width="1.5" opacity="0.8"/>
+                <line x1="0" y1="75" x2="80" y2="50" stroke="url(#nnGrad2)" stroke-width="1.5" opacity="0.6"/>
+                <defs><linearGradient id="nnGrad2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#10B981"/></linearGradient></defs>
+              </svg>
+            </div>
+            <div class="nn-layer output-layer">
+              <div class="nn-node output-node"></div>
+              <span class="nn-layer-label">Output</span>
+            </div>
+          </div>
+          <div class="model-chips-row">
+            <div class="model-chip"><span class="mc-dot blue"></span>CNN: 94.2%</div>
+            <div class="model-chip"><span class="mc-dot green"></span>RF: 91.8%</div>
+            <div class="model-chip"><span class="mc-dot purple"></span>Ensemble: 96.1%</div>
+          </div>
+        </div>
+
+        <button class="btn-primary full" onclick="navigateTo('screen-recommendations')" style="margin:0 16px 16px;">💡 Get AI Recommendations</button>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== RISK DETAIL (Diabetes) ========== -->
+    <div class="screen" id="screen-risk-detail">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-risk')">←</button><h2>Diabetes Risk Detail</h2></div>
+      <div class="risk-scroll">
+        <div class="risk-detail-hero glass-card">
+          <div class="rdh-ring">
+            <svg viewBox="0 0 120 120" width="120" height="120">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(16,185,129,0.15)" stroke-width="10"/>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="#10B981" stroke-width="10"
+                stroke-dasharray="314" stroke-dashoffset="277" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="rdh-inner"><span class="rdh-pct">12%</span><span class="rdh-lbl">Risk</span></div>
+          </div>
+          <div class="rdh-info">
+            <h2>Low Risk</h2>
+            <p>Your dietary habits show low indicators for Type 2 Diabetes</p>
+            <div class="rdh-badges">
+              <span class="badge badge-green">Safe Zone</span>
+              <span class="badge badge-blue">Monitored</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-header"><h3>Risk History (30 Days)</h3></div>
+        <div class="history-chart glass-card">
+          <svg viewBox="0 0 300 100" width="100%" height="100">
+            <defs><linearGradient id="lineGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#10B981" stop-opacity="0.4"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,70 L50,65 L100,72 L150,60 L200,55 L250,48 L300,45" fill="none" stroke="#10B981" stroke-width="2.5"/>
+            <path d="M0,70 L50,65 L100,72 L150,60 L200,55 L250,48 L300,45 L300,100 L0,100 Z" fill="url(#lineGrad)"/>
+            <circle cx="300" cy="45" r="4" fill="#10B981"/>
+          </svg>
+          <div class="chart-labels"><span>30d ago</span><span>Today</span></div>
+        </div>
+        <div class="section-header"><h3>Key Risk Factors</h3></div>
+        <div class="factors-list glass-card">
+          <div class="factor-row">
+            <span class="factor-icon good">✅</span>
+            <div class="factor-detail">
+              <p class="factor-name">Blood Glucose (fasting)</p>
+              <p class="factor-val">89 mg/dL <span class="badge-xs good">Normal</span></p>
+            </div>
+          </div>
+          <div class="factor-row">
+            <span class="factor-icon warn">⚠️</span>
+            <div class="factor-detail">
+              <p class="factor-name">Daily Sugar Intake</p>
+              <p class="factor-val">48g <span class="badge-xs warn">Above Limit</span></p>
+            </div>
+          </div>
+          <div class="factor-row">
+            <span class="factor-icon good">✅</span>
+            <div class="factor-detail">
+              <p class="factor-name">Physical Activity</p>
+              <p class="factor-val">7,234 steps <span class="badge-xs good">Active</span></p>
+            </div>
+          </div>
+          <div class="factor-row">
+            <span class="factor-icon good">✅</span>
+            <div class="factor-detail">
+              <p class="factor-name">BMI</p>
+              <p class="factor-val">22.4 <span class="badge-xs good">Normal</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== SMART ALERTS ========== -->
+    <div class="screen" id="screen-alerts">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-home')">←</button><h2>Smart Alerts</h2></div>
+      <div class="alerts-scroll">
+        <div class="alert-card high glass-card">
+          <div class="alert-icon pulse-anim">⚠️</div>
+          <div class="alert-content">
+            <h4>High Sodium Detected</h4>
+            <p>Your sodium intake reached 2,400mg (120% of daily limit). This increases blood pressure risk.</p>
+            <div class="alert-actions">
+              <button class="btn-ghost xs">Dismiss</button>
+              <button class="btn-primary xs" onclick="navigateTo('screen-recommendations')">Fix Diet</button>
+            </div>
+          </div>
+        </div>
+        <div class="alert-card medium glass-card">
+          <div class="alert-icon">🍬</div>
+          <div class="alert-content">
+            <h4>Excess Sugar Warning</h4>
+            <p>You've consumed 48g of sugar today. Recommended limit is 30g for your health profile.</p>
+            <div class="alert-actions">
+              <button class="btn-ghost xs">Dismiss</button>
+              <button class="btn-primary xs" onclick="navigateTo('screen-recommendations')">View Swaps</button>
+            </div>
+          </div>
+        </div>
+        <div class="alert-card low glass-card">
+          <div class="alert-icon">💧</div>
+          <div class="alert-content">
+            <h4>Hydration Reminder</h4>
+            <p>You've only had 1.6L today. Drink 400ml more to meet your daily goal.</p>
+            <div class="alert-actions">
+              <button class="btn-ghost xs">Dismiss</button>
+              <button class="btn-primary xs">Log Water</button>
+            </div>
+          </div>
+        </div>
+        <div class="alert-card high glass-card" onclick="navigateTo('screen-emergency')">
+          <div class="alert-icon pulse-anim">🆘</div>
+          <div class="alert-content">
+            <h4>Cholesterol Risk Alert</h4>
+            <p>Cumulative cholesterol patterns suggest elevated cardiovascular risk. Doctor consultation recommended.</p>
+            <div class="alert-actions">
+              <button class="btn-primary xs" onclick="event.stopPropagation(); navigateTo('screen-emergency')">Get Help</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== AI RECOMMENDATIONS ========== -->
+    <div class="screen" id="screen-recommendations">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-food-result')">←</button><h2>AI Recommendations</h2></div>
+      <div class="rec-scroll">
+        <!-- Healthy Alternatives -->
+        <div class="section-header"><h3>🥗 Healthy Food Alternatives</h3></div>
+        <div class="rec-food-list">
+          <div class="rec-food-card glass-card">
+            <div class="rec-food-emoji">🥗</div>
+            <div class="rec-food-info"><h4>Grilled Chicken Salad</h4><p>380 kcal · Low sodium · High protein</p><div class="badge badge-green">✅ Recommended</div></div>
+            <div class="rec-food-score green">92</div>
+          </div>
+          <div class="rec-food-card glass-card">
+            <div class="rec-food-emoji">🍱</div>
+            <div class="rec-food-info"><h4>Quinoa Power Bowl</h4><p>420 kcal · Complex carbs · High fiber</p><div class="badge badge-green">✅ Recommended</div></div>
+            <div class="rec-food-score green">88</div>
+          </div>
+          <div class="rec-food-card glass-card">
+            <div class="rec-food-emoji">🐟</div>
+            <div class="rec-food-info"><h4>Baked Salmon</h4><p>310 kcal · Omega-3 rich · Heart healthy</p><div class="badge badge-green">✅ Recommended</div></div>
+            <div class="rec-food-score green">95</div>
+          </div>
+        </div>
+
+        <!-- Diet Plan -->
+        <div class="section-header"><h3>📅 Today's AI Diet Plan</h3></div>
+        <div class="diet-plan glass-card">
+          <div class="meal-row">
+            <div class="meal-time">7:30 AM</div>
+            <div class="meal-detail"><h4>Breakfast</h4><p>Oats + Berries + Greek Yogurt · 340 kcal</p></div>
+            <span class="meal-icon">🥣</span>
+          </div>
+          <div class="meal-row">
+            <div class="meal-time">10:00 AM</div>
+            <div class="meal-detail"><h4>Snack</h4><p>Apple + Almonds · 180 kcal</p></div>
+            <span class="meal-icon">🍎</span>
+          </div>
+          <div class="meal-row">
+            <div class="meal-time">1:00 PM</div>
+            <div class="meal-detail"><h4>Lunch</h4><p>Grilled Chicken + Veggies · 480 kcal</p></div>
+            <span class="meal-icon">🍗</span>
+          </div>
+          <div class="meal-row">
+            <div class="meal-time">4:00 PM</div>
+            <div class="meal-detail"><h4>Snack</h4><p>Protein Bar + Water · 150 kcal</p></div>
+            <span class="meal-icon">🍫</span>
+          </div>
+          <div class="meal-row">
+            <div class="meal-time">7:30 PM</div>
+            <div class="meal-detail"><h4>Dinner</h4><p>Baked Salmon + Quinoa + Salad · 520 kcal</p></div>
+            <span class="meal-icon">🍽️</span>
+          </div>
+        </div>
+
+        <!-- Lifestyle Tips -->
+        <div class="section-header"><h3>💪 Lifestyle Improvements</h3></div>
+        <div class="lifestyle-chips">
+          <div class="lifestyle-chip glass-card-sm">
+            <span>🏃</span>
+            <p>30 min walk</p>
+            <span class="chip-sub">Daily</span>
+          </div>
+          <div class="lifestyle-chip glass-card-sm">
+            <span>💤</span>
+            <p>Sleep 8hrs</p>
+            <span class="chip-sub">Tonight</span>
+          </div>
+          <div class="lifestyle-chip glass-card-sm">
+            <span>💧</span>
+            <p>2L Water</p>
+            <span class="chip-sub">Daily</span>
+          </div>
+          <div class="lifestyle-chip glass-card-sm">
+            <span>🧘</span>
+            <p>Meditate</p>
+            <span class="chip-sub">15 min</span>
+          </div>
+        </div>
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== 🇮🇳 AI DESI SWAP ENGINE ========== -->
+    <div class="screen" id="screen-indian-swaps">
+      <div class="risk-header">
+        <button class="back-btn" onclick="navigateTo('screen-home')">←</button>
+        <h2>🇮🇳 AI Desi Swap Engine</h2>
+        <button class="icon-btn" onclick="navigateTo('screen-chatbot')">🤖</button>
+      </div>
+      <div class="desi-scroll">
+        <!-- Floating Glass Banner -->
+        <div class="desi-hero glass-card">
+          <div class="desi-hero-bg"></div>
+          <div class="desi-hero-content">
+            <span class="badge badge-purple">AI Nutrition Swap</span>
+            <h3>Ditch the Junk. Go Desi!</h3>
+            <p>Smart replacements of ultra-processed food with clean, nutrient-dense, fiber-rich traditional Indian recipes.</p>
+          </div>
+        </div>
+
+        <!-- Custom Swap Search Input -->
+        <div class="custom-swap-search glass-card" style="margin: 0 16px 16px 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+          <h4 style="font-size: 0.9rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 6px; margin: 0;">🔮 AI Custom Desi Swap</h4>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Type any food item to instantly discover its traditional healthy Indian alternative!</p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="customSwapInput" placeholder="E.g., donuts, potato chips, ice cream..." style="flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 0.85rem;" />
+            <button id="customSwapBtn" class="btn-primary" style="padding: 10px 18px; border-radius: 20px; font-size: 0.85rem; background: linear-gradient(135deg, #10B981, #059669); border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;">Swap ➔</button>
+          </div>
+          <!-- Custom Swap Result Placeholder (Hidden by default) -->
+          <div id="customSwapResult" style="display: none; margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px; animation: fadeIn 0.4s ease;"></div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="desi-tabs">
+          <button class="desi-tab active" data-filter="all" onclick="filterDesiSwaps('all')">All</button>
+          <button class="desi-tab" data-filter="fast-food" onclick="filterDesiSwaps('fast-food')">Fast Food</button>
+          <button class="desi-tab" data-filter="snacks" onclick="filterDesiSwaps('snacks')">Snacks</button>
+          <button class="desi-tab" data-filter="drinks" onclick="filterDesiSwaps('drinks')">Drinks</button>
+          <button class="desi-tab" data-filter="sweets" onclick="filterDesiSwaps('sweets')">Sweets</button>
+        </div>
+
+        <!-- Swap Container -->
+        <div class="swaps-container">
+          <!-- Swap 1: Pizza -> Oats Uttapam -->
+          <div class="swap-card glass-card active" data-category="fast-food">
+            <div class="swap-header">
+              <span class="swap-category">🍕 Fast Food Swap</span>
+              <span class="swap-save-badge">🔥 Saves 612 kcal</span>
+            </div>
+            <div class="swap-comparison">
+              <div class="swap-side junk">
+                <div class="swap-emoji">🍕</div>
+                <h4>Pepperoni Pizza</h4>
+                <p class="swap-kcal">892 kcal</p>
+                <div class="swap-tag-junk">High Sodium</div>
+              </div>
+              <div class="swap-vs">VS</div>
+              <div class="swap-side healthy">
+                <div class="swap-emoji">🥞</div>
+                <h4>Oats Rava Uttapam</h4>
+                <p class="swap-kcal">280 kcal</p>
+                <div class="swap-tag-healthy">Rich Fiber</div>
+              </div>
+            </div>
+            <!-- Nutrient Delta Grid -->
+            <div class="nutrient-deltas">
+              <div class="delta-item red">
+                <span class="delta-lbl">Calories</span>
+                <span class="delta-pct">-68%</span>
+              </div>
+              <div class="delta-item red">
+                <span class="delta-lbl">Sodium</span>
+                <span class="delta-pct">-88%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Protein</span>
+                <span class="delta-pct">+160%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Fiber</span>
+                <span class="delta-pct">+320%</span>
+              </div>
+            </div>
+            <!-- AI Insight -->
+            <div class="swap-insight">
+              <p>💡 <strong>AI Health Insight:</strong> Uttapam made with oats and loaded with fresh bell peppers, onions, and carrots contains complex carbohydrates that digest slowly, preventing glucose spikes. The high soluble beta-glucan fiber in oats actively drags out bad LDL cholesterol, unlike the saturated trans-fats and excessive chemical sodium found in pepperoni pizza crust and processed cheese.</p>
+            </div>
+            <button class="btn-primary sm full" onclick="logDesiSwap('Oats Rava Uttapam', 612, 50)">🔄 Log Oats Uttapam Swap (+50 XP)</button>
+          </div>
+
+          <!-- Swap 2: Burger -> Soya Paneer Wrap -->
+          <div class="swap-card glass-card active" data-category="fast-food">
+            <div class="swap-header">
+              <span class="swap-category">🍔 Fast Food Swap</span>
+              <span class="swap-save-badge">🔥 Saves 250 kcal</span>
+            </div>
+            <div class="swap-comparison">
+              <div class="swap-side junk">
+                <div class="swap-emoji">🍔</div>
+                <h4>Double Burger</h4>
+                <p class="swap-kcal">540 kcal</p>
+                <div class="swap-tag-junk">Trans Fats</div>
+              </div>
+              <div class="swap-vs">VS</div>
+              <div class="swap-side healthy">
+                <div class="swap-emoji">🌯</div>
+                <h4>Paneer Tikka Wrap</h4>
+                <p class="swap-kcal">290 kcal</p>
+                <div class="swap-tag-healthy">High Protein</div>
+              </div>
+            </div>
+            <div class="nutrient-deltas">
+              <div class="delta-item red">
+                <span class="delta-lbl">Calories</span>
+                <span class="delta-pct">-46%</span>
+              </div>
+              <div class="delta-item red">
+                <span class="delta-lbl">Carbs</span>
+                <span class="delta-pct">-35%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Protein</span>
+                <span class="delta-pct">+110%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Iron</span>
+                <span class="delta-pct">+180%</span>
+              </div>
+            </div>
+            <div class="swap-insight">
+              <p>💡 <strong>AI Health Insight:</strong> Soya-paneer tikka wrap uses whole wheat flatbread (roti) loaded with calcium-dense cottage cheese (paneer) and fiber. This gives you 24g of high-biological-value protein for muscle repair, whereas the refined burger buns cause a massive insulin spike and deep-fried patties load your bloodstream with oxidized lipids.</p>
+            </div>
+            <button class="btn-primary sm full" onclick="logDesiSwap('Paneer Tikka Wrap', 250, 40)">🔄 Log Paneer Tikka Swap (+40 XP)</button>
+          </div>
+
+          <!-- Swap 3: French Fries -> Masala Makhana -->
+          <div class="swap-card glass-card active" data-category="snacks">
+            <div class="swap-header">
+              <span class="swap-category">🍟 Snack Swap</span>
+              <span class="swap-save-badge">🔥 Saves 245 kcal</span>
+            </div>
+            <div class="swap-comparison">
+              <div class="swap-side junk">
+                <div class="swap-emoji">🍟</div>
+                <h4>French Fries</h4>
+                <p class="swap-kcal">365 kcal</p>
+                <div class="swap-tag-junk">High Sodium</div>
+              </div>
+              <div class="swap-vs">VS</div>
+              <div class="swap-side healthy">
+                <div class="swap-emoji">🍿</div>
+                <h4>Masala Makhana</h4>
+                <p class="swap-kcal">120 kcal</p>
+                <div class="swap-tag-healthy">Superfood</div>
+              </div>
+            </div>
+            <div class="nutrient-deltas">
+              <div class="delta-item red">
+                <span class="delta-lbl">Calories</span>
+                <span class="delta-pct">-67%</span>
+              </div>
+              <div class="delta-item red">
+                <span class="delta-lbl">Sodium</span>
+                <span class="delta-pct">-87%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Calcium</span>
+                <span class="delta-pct">+320%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Antioxidants</span>
+                <span class="delta-pct">High</span>
+              </div>
+            </div>
+            <div class="swap-insight">
+              <p>💡 <strong>AI Health Insight:</strong> Makhana (Lotus Seeds) are puffed grains rich in kaempferol (a powerful anti-inflammatory antioxidant) and calcium for bone strength. They are roasted in a touch of healthy ghee and salt, avoiding the acrylamide toxins and deep-fried trans-fats packed inside commercial frozen french fries.</p>
+            </div>
+            <button class="btn-primary sm full" onclick="logDesiSwap('Masala Makhana', 245, 30)">🔄 Log Masala Makhana Swap (+30 XP)</button>
+          </div>
+
+          <!-- Swap 4: Soda / Cola -> Masala Chaas -->
+          <div class="swap-card glass-card active" data-category="drinks">
+            <div class="swap-header">
+              <span class="swap-category">🥤 Drink Swap</span>
+              <span class="swap-save-badge">🔥 Saves 105 kcal</span>
+            </div>
+            <div class="swap-comparison">
+              <div class="swap-side junk">
+                <div class="swap-emoji">🥤</div>
+                <h4>Cola Soda</h4>
+                <p class="swap-kcal">150 kcal</p>
+                <div class="swap-tag-junk">High Sugar</div>
+              </div>
+              <div class="swap-vs">VS</div>
+              <div class="swap-side healthy">
+                <div class="swap-emoji">🥛</div>
+                <h4>Spiced Mint Chaas</h4>
+                <p class="swap-kcal">45 kcal</p>
+                <div class="swap-tag-healthy">Prebiotic</div>
+              </div>
+            </div>
+            <div class="nutrient-deltas">
+              <div class="delta-item red">
+                <span class="delta-lbl">Calories</span>
+                <span class="delta-pct">-70%</span>
+              </div>
+              <div class="delta-item red">
+                <span class="delta-lbl">Sugar</span>
+                <span class="delta-pct">-100%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Probiotics</span>
+                <span class="delta-pct">Active</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Calcium</span>
+                <span class="delta-pct">+150mg</span>
+              </div>
+            </div>
+            <div class="swap-insight">
+              <p>💡 <strong>AI Health Insight:</strong> Spiced buttermilk (Chaas) with fresh coriander, mint, ginger, and cumin is a live prebiotic drink that seeds your gut microbiome with healthy lactobacilli. Cola soda, on the other hand, delivers 39g of pure inflammatory high-fructose corn syrup that forces your liver to store visceral fat and disrupts insulin pathways.</p>
+            </div>
+            <button class="btn-primary sm full" onclick="logDesiSwap('Spiced Mint Chaas', 105, 30)">🔄 Log Masala Chaas Swap (+30 XP)</button>
+          </div>
+
+          <!-- Swap 5: Candy/Milk Chocolate -> Dry Fruit Ladoo -->
+          <div class="swap-card glass-card active" data-category="sweets">
+            <div class="swap-header">
+              <span class="swap-category">🍬 Sweet Swap</span>
+              <span class="swap-save-badge">🔥 Saves 110 kcal</span>
+            </div>
+            <div class="swap-comparison">
+              <div class="swap-side junk">
+                <div class="swap-emoji">🍫</div>
+                <h4>Milk Chocolate</h4>
+                <p class="swap-kcal">260 kcal</p>
+                <div class="swap-tag-junk">Added Sugar</div>
+              </div>
+              <div class="swap-vs">VS</div>
+              <div class="swap-side healthy">
+                <div class="swap-emoji">🧆</div>
+                <h4>Dates & Nuts Ladoo</h4>
+                <p class="swap-kcal">150 kcal</p>
+                <div class="swap-tag-healthy">No Sugar</div>
+              </div>
+            </div>
+            <div class="nutrient-deltas">
+              <div class="delta-item red">
+                <span class="delta-lbl">Calories</span>
+                <span class="delta-pct">-42%</span>
+              </div>
+              <div class="delta-item red">
+                <span class="delta-lbl">Added Sugar</span>
+                <span class="delta-pct">-100%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Fiber</span>
+                <span class="delta-pct">+250%</span>
+              </div>
+              <div class="delta-item green">
+                <span class="delta-lbl">Magnesium</span>
+                <span class="delta-pct">+300%</span>
+              </div>
+            </div>
+            <div class="swap-insight">
+              <p>💡 <strong>AI Health Insight:</strong> Dates and Nuts Ladoo are naturally sweetened with dates (which are rich in dietary fiber, slowing down sucrose absorption) and loaded with cashews, almonds, and pistachios. Milk chocolate relies on highly refined cane sugars and processed milk fats that raise your glycemic index and stress your pancreas.</p>
+            </div>
+            <button class="btn-primary sm full" onclick="logDesiSwap('Dates & Nuts Ladoo', 110, 30)">🔄 Log Dry Fruit Ladoo Swap (+30 XP)</button>
+          </div>
+        </div><!-- /swaps-container -->
+        <div style="height: 80px;"></div>
+      </div><!-- /desi-scroll -->
+    </div>
+
+    <!-- ========== ANALYTICS DASHBOARD ========== -->
+    <div class="screen" id="screen-analytics">
+      <div class="risk-header">
+        <button class="back-btn" onclick="navigateTo('screen-home')">←</button>
+        <h2>Health Analytics</h2>
+        <button class="icon-btn" onclick="navigateTo('screen-home')">🏠</button>
+      </div>
+      <div class="analytics-scroll">
+        <!-- Period Selector -->
+        <div class="period-tabs">
+          <button class="period-tab active">Week</button>
+          <button class="period-tab">Month</button>
+          <button class="period-tab">3 Months</button>
+          <button class="period-tab">Year</button>
+        </div>
+
+        <!-- Calorie Trend -->
+        <div class="section-header"><h3>Calorie Intake Trend</h3></div>
+        <div class="trend-chart glass-card">
+          <svg viewBox="0 0 320 120" width="100%" height="120">
+            <defs>
+              <linearGradient id="calGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,80 C30,70 60,60 90,65 C120,70 150,50 180,45 C210,40 240,55 270,50 C285,47 300,44 320,40" fill="none" stroke="#3B82F6" stroke-width="3"/>
+            <path d="M0,80 C30,70 60,60 90,65 C120,70 150,50 180,45 C210,40 240,55 270,50 C285,47 300,44 320,40 L320,120 L0,120Z" fill="url(#calGrad)"/>
+            <!-- Goal line -->
+            <line x1="0" y1="55" x2="320" y2="55" stroke="#10B981" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.6"/>
+            <text x="250" y="50" font-size="9" fill="#10B981" opacity="0.8">Goal</text>
+            <circle cx="320" cy="40" r="4" fill="#3B82F6"/>
+          </svg>
+          <div class="chart-labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+        </div>
+
+        <!-- Stats Summary Row -->
+        <div class="analytics-stats-row">
+          <div class="analytics-stat glass-card-sm">
+            <div class="as-icon">🔥</div>
+            <div class="as-val">1,872</div>
+            <div class="as-label">Avg Calories</div>
+            <div class="as-trend good">↓ 4%</div>
+          </div>
+          <div class="analytics-stat glass-card-sm">
+            <div class="as-icon">📊</div>
+            <div class="as-val">22.4</div>
+            <div class="as-label">BMI</div>
+            <div class="as-trend good">→ Stable</div>
+          </div>
+          <div class="analytics-stat glass-card-sm">
+            <div class="as-icon">💧</div>
+            <div class="as-val">1.8L</div>
+            <div class="as-label">Avg Water</div>
+            <div class="as-trend warn">↑ 12%</div>
+          </div>
+        </div>
+
+        <!-- Nutrition Heatmap -->
+        <div class="section-header"><h3>Nutrition Heatmap (7 days)</h3></div>
+        <div class="heatmap glass-card">
+          <div class="heatmap-row"><span class="hm-label">Protein</span><div class="hm-cells"><div class="hm-cell" style="opacity:0.9;background:#10B981"></div><div class="hm-cell" style="opacity:0.7;background:#10B981"></div><div class="hm-cell" style="opacity:0.8;background:#10B981"></div><div class="hm-cell" style="opacity:0.6;background:#10B981"></div><div class="hm-cell" style="opacity:0.95;background:#10B981"></div><div class="hm-cell" style="opacity:0.5;background:#10B981"></div><div class="hm-cell" style="opacity:0.4;background:#10B981"></div></div></div>
+          <div class="heatmap-row"><span class="hm-label">Carbs</span><div class="hm-cells"><div class="hm-cell" style="opacity:0.8;background:#F59E0B"></div><div class="hm-cell" style="opacity:0.9;background:#F59E0B"></div><div class="hm-cell" style="opacity:0.95;background:#F59E0B"></div><div class="hm-cell" style="opacity:0.7;background:#F59E0B"></div><div class="hm-cell" style="opacity:0.6;background:#F59E0B"></div><div class="hm-cell" style="opacity:0.85;background:#F59E0B"></div><div class="hm-cell" style="opacity:0.3;background:#F59E0B"></div></div></div>
+          <div class="heatmap-row"><span class="hm-label">Fat</span><div class="hm-cells"><div class="hm-cell" style="opacity:0.6;background:#EF4444"></div><div class="hm-cell" style="opacity:0.75;background:#EF4444"></div><div class="hm-cell" style="opacity:0.9;background:#EF4444"></div><div class="hm-cell" style="opacity:0.5;background:#EF4444"></div><div class="hm-cell" style="opacity:0.4;background:#EF4444"></div><div class="hm-cell" style="opacity:0.7;background:#EF4444"></div><div class="hm-cell" style="opacity:0.2;background:#EF4444"></div></div></div>
+          <div class="heatmap-row"><span class="hm-label">Sugar</span><div class="hm-cells"><div class="hm-cell" style="opacity:0.5;background:#A855F7"></div><div class="hm-cell" style="opacity:0.6;background:#A855F7"></div><div class="hm-cell" style="opacity:0.8;background:#A855F7"></div><div class="hm-cell" style="opacity:0.4;background:#A855F7"></div><div class="hm-cell" style="opacity:0.9;background:#A855F7"></div><div class="hm-cell" style="opacity:0.65;background:#A855F7"></div><div class="hm-cell" style="opacity:0.2;background:#A855F7"></div></div></div>
+          <div class="heatmap-days"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        </div>
+
+        <!-- BMI Section -->
+        <div class="section-header"><h3>BMI Analysis</h3></div>
+        <div class="bmi-card glass-card">
+          <div class="bmi-scale">
+            <div class="bmi-bar">
+              <div class="bmi-underweight">Underweight</div>
+              <div class="bmi-normal">Normal</div>
+              <div class="bmi-overweight">Overweight</div>
+              <div class="bmi-obese">Obese</div>
+              <div class="bmi-pointer" style="left: 48%"></div>
+            </div>
+            <div class="bmi-labels"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+          </div>
+          <div class="bmi-result">
+            <span class="bmi-value">22.4</span>
+            <span class="bmi-category badge-green">Normal Weight</span>
+          </div>
+        </div>
+
+        <!-- Weight Tracking -->
+        <div class="section-header"><h3>Weight Tracking</h3></div>
+        <div class="weight-chart glass-card">
+          <svg viewBox="0 0 300 80" width="100%" height="80">
+            <polyline fill="none" stroke="#7C3AED" stroke-width="2.5" points="0,50 40,48 80,46 120,44 160,43 200,41 240,40 280,38 300,36"/>
+            <circle cx="300" cy="36" r="4" fill="#7C3AED"/>
+            <text x="270" y="30" font-size="9" fill="#A855F7">68.2 kg</text>
+          </svg>
+          <div class="weight-stats"><span>Start: 71.5 kg</span><span>Current: 68.2 kg</span><span class="good">↓ 3.3 kg</span></div>
+        </div>
+
+        <div style="height:80px;"></div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <nav class="bottom-nav">
+        <button class="nav-item" onclick="navigateTo('screen-home')"><span>🏠</span><span>Home</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-scanner')"><span>🔬</span><span>Scan</span></button>
+        <button class="nav-item active"><span>📊</span><span>Analytics</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-chatbot')"><span>🤖</span><span>AI Chat</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-profile')"><span>👤</span><span>Profile</span></button>
+      </nav>
+    </div>
+
+    <!-- ========== AI CHATBOT ========== -->
+    <div class="screen" id="screen-chatbot">
+      <div class="chat-header">
+        <button class="back-btn" onclick="navigateTo('screen-home')">←</button>
+        <div class="chat-ai-info">
+          <div class="chat-ai-avatar">🤖</div>
+          <div>
+            <h4>NutriAI Assistant</h4>
+            <span class="status-online">● Online</span>
+          </div>
+        </div>
+        <button class="icon-btn">⚙️</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-msg ai">
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-bubble ai">
+            <p id="chatbotGreetingText">Hi! 👋 I'm your AI health assistant. I can help you with food advice, disease risk queries, and personalized diet recommendations. What would you like to know?</p>
+            <span class="msg-time">9:10 AM</span>
+          </div>
+        </div>
+        <div class="quick-suggestions">
+          <button class="quick-chip" onclick="sendChatMsg('Can diabetics eat pizza?')">Can diabetics eat pizza?</button>
+          <button class="quick-chip" onclick="sendChatMsg('Suggest low sugar foods')">Suggest low sugar foods</button>
+          <button class="quick-chip" onclick="sendChatMsg('How to reduce cholesterol?')">How to reduce cholesterol?</button>
+          <button class="quick-chip" onclick="sendChatMsg('What is my risk today?')">My risk today?</button>
+        </div>
+      </div>
+      <div class="chat-input-wrap">
+        <button class="chat-voice-btn" id="voiceBtn">🎙️</button>
+        <input class="chat-input" id="chatInput" placeholder="Ask me anything about your health..." />
+        <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMsgFromInput()">➤</button>
+      </div>
+    </div>
+
+    <!-- ========== USER PROFILE ========== -->
+    <div class="screen" id="screen-profile">
+      <div class="profile-header">
+        <button class="back-btn" onclick="navigateTo('screen-home')">←</button>
+        <h2>My Profile</h2>
+        <button class="icon-btn" onclick="navigateTo('screen-settings')">⚙️</button>
+      </div>
+      <div class="profile-scroll">
+        <!-- Avatar Section -->
+        <div class="profile-avatar-section glass-card">
+          <div class="profile-avatar-big" id="profileAvatarBig">U</div>
+          <div class="profile-avatar-ring2"></div>
+          <h2 class="profile-name" id="profileName">User</h2>
+          <p class="profile-email" id="profileEmail">user@example.com</p>
+          <div class="profile-badges-row">
+            <span class="badge badge-green">Level 8</span>
+            <span class="badge badge-blue">14-day Streak</span>
+            <span class="badge badge-purple">AI Premium</span>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="profile-stats-grid">
+          <div class="profile-stat glass-card-sm"><div class="ps-val" id="profileAge">26</div><div class="ps-label">Age</div></div>
+          <div class="profile-stat glass-card-sm"><div class="ps-val" id="profileGender">Male</div><div class="ps-label">Gender</div></div>
+          <div class="profile-stat glass-card-sm"><div class="ps-val">68.2</div><div class="ps-label">Weight (kg)</div></div>
+          <div class="profile-stat glass-card-sm"><div class="ps-val">22.4</div><div class="ps-label">BMI</div></div>
+        </div>
+
+        <!-- Health Goals -->
+        <div class="section-header"><h3>Daily Goals Progress</h3></div>
+        <div class="goals-list glass-card">
+          <div class="goal-item">
+            <div class="goal-info">
+              <span class="goal-icon">🔥</span>
+              <span class="goal-name">Calories</span>
+            </div>
+            <div class="goal-progress">
+              <div class="goal-bar"><div class="goal-fill" style="width:92%; background:linear-gradient(90deg,#F59E0B,#EF4444)"></div></div>
+              <span>1840 / 2000</span>
+            </div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-info"><span class="goal-icon">💧</span><span class="goal-name">Water</span></div>
+            <div class="goal-progress">
+              <div class="goal-bar"><div class="goal-fill" style="width:64%; background:linear-gradient(90deg,#3B82F6,#06B6D4)"></div></div>
+              <span>1.6 / 2.5L</span>
+            </div>
+          </div>
+          <div class="goal-item">
+            <div class="goal-info"><span class="goal-icon">👟</span><span class="goal-name">Steps</span></div>
+            <div class="goal-progress">
+              <div class="goal-bar"><div class="goal-fill" style="width:72%; background:linear-gradient(90deg,#10B981,#3B82F6)"></div></div>
+              <span>7,234 / 10,000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Medical History -->
+        <div class="section-header"><h3>Medical History</h3></div>
+        <div class="medical-list glass-card">
+          <div class="medical-item"><span class="medical-icon">🩺</span><div><p class="medical-name">No Chronic Conditions</p><p class="medical-sub">Last checked: May 2025</p></div><span class="badge badge-green">Clear</span></div>
+          <div class="medical-item"><span class="medical-icon">💊</span><div><p class="medical-name">No Current Medications</p><p class="medical-sub">Self-reported</p></div><span class="badge badge-blue">None</span></div>
+          <div class="medical-item"><span class="medical-icon">🧬</span><div><p class="medical-name">Family History: Diabetes</p><p class="medical-sub">Paternal side</p></div><span class="badge badge-warn">Monitor</span></div>
+        </div>
+
+        <button class="btn-primary full" style="margin:0 16px 16px;">✏️ Edit Profile</button>
+        <div style="height:80px;"></div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <nav class="bottom-nav">
+        <button class="nav-item" onclick="navigateTo('screen-home')"><span>🏠</span><span>Home</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-scanner')"><span>🔬</span><span>Scan</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-analytics')"><span>📊</span><span>Analytics</span></button>
+        <button class="nav-item" onclick="navigateTo('screen-chatbot')"><span>🤖</span><span>AI Chat</span></button>
+        <button class="nav-item active"><span>👤</span><span>Profile</span></button>
+      </nav>
+    </div>
+
+    <!-- ========== SETTINGS ========== -->
+    <div class="screen" id="screen-settings">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-profile')">←</button><h2>Settings</h2></div>
+      <div class="settings-scroll">
+
+        <!-- Theme Toggle -->
+        <div class="settings-section glass-card">
+          <div class="settings-item">
+            <div class="settings-info">
+              <span class="settings-icon">🌙</span>
+              <div><p class="settings-name">Dark Mode</p><p class="settings-sub">Easier on eyes at night</p></div>
+            </div>
+            <div class="toggle-wrap" id="themeToggle" onclick="toggleTheme()">
+              <div class="toggle-track active"><div class="toggle-thumb"></div></div>
+            </div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-info"><span class="settings-icon">🌐</span><div><p class="settings-name">Language</p><p class="settings-sub">English (US)</p></div></div>
+            <span class="settings-arrow">›</span>
+          </div>
+        </div>
+
+        <div class="settings-section glass-card">
+          <h4 class="settings-group-title">Notifications</h4>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">🔔</span><div><p class="settings-name">Push Notifications</p><p class="settings-sub">Alerts and reminders</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">⏰</span><div><p class="settings-name">Meal Reminders</p><p class="settings-sub">3x daily</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">🏥</span><div><p class="settings-name">Health Alerts</p><p class="settings-sub">Critical risk warnings</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+        </div>
+
+        <div class="settings-section glass-card">
+          <h4 class="settings-group-title">Privacy & Security</h4>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">🔒</span><div><p class="settings-name">Biometric Lock</p><p class="settings-sub">Face ID / Fingerprint</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">☁️</span><div><p class="settings-name">Cloud Sync</p><p class="settings-sub">Auto-backup to secure cloud</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">📤</span><div><p class="settings-name">Export Health Data</p><p class="settings-sub">PDF / CSV</p></div></div><span class="settings-arrow">›</span></div>
+        </div>
+
+        <div class="settings-section glass-card">
+          <h4 class="settings-group-title">AI Personalization</h4>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">🧠</span><div><p class="settings-name">AI Learning Mode</p><p class="settings-sub">Adapt to your habits</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+          <div class="settings-item"><div class="settings-info"><span class="settings-icon">🎯</span><div><p class="settings-name">Health Goals AI</p><p class="settings-sub">Auto-adjust targets</p></div></div><div class="toggle-wrap"><div class="toggle-track active"><div class="toggle-thumb"></div></div></div></div>
+        </div>
+
+        <div class="settings-section glass-card">
+          <h4 class="settings-group-title">Gemini API Key</h4>
+          <div class="settings-item" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 16px;">
+            <div class="settings-info" style="width: 100%;">
+              <span class="settings-icon">🔑</span>
+              <div style="flex: 1;">
+                <p class="settings-name">Gemini API Key</p>
+                <p class="settings-sub">Used for real-time visual scanning and chat</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; width: 100%;">
+              <input type="password" id="settingsGeminiKey" placeholder="Enter your Gemini API key..." style="flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: white; font-family: inherit; font-size: 0.85rem;" />
+              <button class="btn-primary sm" id="saveGeminiKeyBtn" style="border-radius: 20px; padding: 0 16px;">Save</button>
+            </div>
+            <p class="settings-sub" style="font-size: 0.75rem; margin-top: -4px;">Leave blank to use the client-side TensorFlow scanner fallback.</p>
+          </div>
+        </div>
+
+        <div style="height:30px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== EMERGENCY HEALTH INSIGHTS ========== -->
+    <div class="screen" id="screen-emergency">
+      <div class="emergency-header">
+        <button class="back-btn" onclick="navigateTo('screen-alerts')">←</button>
+        <h2>Emergency Insights</h2>
+      </div>
+      <div class="emergency-scroll">
+        <div class="emergency-banner glass-card high">
+          <div class="emg-pulse-icon">🆘</div>
+          <h3>Critical Health Alert</h3>
+          <p>Your cholesterol and sodium patterns indicate elevated cardiovascular risk. Immediate attention recommended.</p>
+        </div>
+
+        <div class="section-header"><h3>🏥 Nearby Hospitals</h3></div>
+        <div class="hospital-card glass-card">
+          <div class="hosp-icon">🏥</div>
+          <div class="hosp-info"><h4>City General Hospital</h4><p>1.2 km away · Open 24/7</p></div>
+          <button class="btn-primary sm">Navigate</button>
+        </div>
+        <div class="hospital-card glass-card">
+          <div class="hosp-icon">🏥</div>
+          <div class="hosp-info"><h4>Apollo Health Center</h4><p>2.8 km away · Open 24/7</p></div>
+          <button class="btn-primary sm">Navigate</button>
+        </div>
+
+        <div class="section-header"><h3>📞 Emergency Contacts</h3></div>
+        <div class="emergency-contacts glass-card">
+          <div class="emg-contact"><div class="emg-avatar">Dr. Rajan</div><div><p>Dr. Rajan Patel</p><p class="emg-sub">Cardiologist</p></div><button class="btn-primary sm">Call</button></div>
+          <div class="emg-contact"><div class="emg-avatar" style="background:linear-gradient(135deg,#10B981,#3B82F6)">Mom</div><div><p>Family Contact</p><p class="emg-sub">Emergency</p></div><button class="btn-primary sm">Call</button></div>
+          <div class="emg-contact"><div class="emg-avatar" style="background:linear-gradient(135deg,#EF4444,#F97316)">112</div><div><p>National Emergency</p><p class="emg-sub">Ambulance</p></div><button class="btn-primary sm" style="background:linear-gradient(135deg,#EF4444,#F97316)">Call 112</button></div>
+        </div>
+
+        <div class="section-header"><h3>💊 Doctor Consultation</h3></div>
+        <div class="consult-card glass-card" onclick="navigateTo('screen-chatbot')">
+          <div class="consult-icon">👨‍⚕️</div>
+          <div class="consult-info"><h4>Book Telemedicine</h4><p>Video consult with certified cardiologist in 15 minutes</p></div>
+          <button class="btn-primary sm">Book Now</button>
+        </div>
+        <div style="height:30px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== GAMIFICATION ========== -->
+    <div class="screen" id="screen-gamification">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-home')">←</button><h2>Achievements</h2></div>
+      <div class="game-scroll">
+        <!-- Level Card -->
+        <div class="level-card glass-card">
+          <div class="level-info">
+            <h3>Level 8 – Health Warrior</h3>
+            <p>2,340 XP · Next level in 160 XP</p>
+            <div class="xp-bar"><div class="xp-fill" style="width:94%"></div></div>
+          </div>
+          <div class="level-badge-big">🏆</div>
+        </div>
+
+        <!-- Streak -->
+        <div class="streak-card glass-card">
+          <h3>🔥 14-Day Health Streak!</h3>
+          <div class="streak-calendar">
+            <div class="s-day done">M</div><div class="s-day done">T</div><div class="s-day done">W</div><div class="s-day done">T</div><div class="s-day done">F</div><div class="s-day done">S</div><div class="s-day done">S</div>
+            <div class="s-day done">M</div><div class="s-day done">T</div><div class="s-day done">W</div><div class="s-day done">T</div><div class="s-day done">F</div><div class="s-day done">S</div><div class="s-day done">S</div>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="section-header"><h3>Badges Earned</h3></div>
+        <div class="badges-grid">
+          <div class="badge-item earned"><span class="badge-emoji">🥗</span><p>Salad Master</p></div>
+          <div class="badge-item earned"><span class="badge-emoji">💧</span><p>Hydration Pro</p></div>
+          <div class="badge-item earned"><span class="badge-emoji">🏃</span><p>Step Champion</p></div>
+          <div class="badge-item earned"><span class="badge-emoji">🎯</span><p>Goal Getter</p></div>
+          <div class="badge-item earned"><span class="badge-emoji">🧠</span><p>AI Expert</p></div>
+          <div class="badge-item earned"><span class="badge-emoji">🌙</span><p>Sleep Master</p></div>
+          <div class="badge-item locked"><span class="badge-emoji">🔒</span><p>Iron Will</p></div>
+          <div class="badge-item locked"><span class="badge-emoji">🔒</span><p>30-Day Pro</p></div>
+        </div>
+
+        <!-- Daily Challenges -->
+        <div class="section-header"><h3>Daily Challenges</h3></div>
+        <div class="challenge-list">
+          <div class="challenge-item glass-card done">
+            <span class="ch-icon">✅</span>
+            <div><p class="ch-name">Scan 3 meals</p><p class="ch-reward">+50 XP</p></div>
+            <span class="badge badge-green">Done</span>
+          </div>
+          <div class="challenge-item glass-card">
+            <span class="ch-icon">💧</span>
+            <div><p class="ch-name">Drink 2L water</p><p class="ch-reward">+30 XP</p></div>
+            <div class="ch-prog"><div class="ch-fill" style="width:64%"></div></div>
+          </div>
+          <div class="challenge-item glass-card">
+            <span class="ch-icon">🚶</span>
+            <div><p class="ch-name">Walk 10,000 steps</p><p class="ch-reward">+80 XP</p></div>
+            <div class="ch-prog"><div class="ch-fill" style="width:72%"></div></div>
+          </div>
+        </div>
+        <div style="height:30px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== WEARABLE INTEGRATION ========== -->
+    <div class="screen" id="screen-wearable">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-home')">←</button><h2>Wearable Integration</h2></div>
+      <div class="wearable-scroll">
+        <!-- Sync Status -->
+        <div class="wearable-sync-card glass-card">
+          <div class="watch-icon">⌚</div>
+          <div class="watch-info">
+            <h3>Apple Watch Series 9</h3>
+            <p>Connected · Last sync: 2 min ago</p>
+            <div class="sync-dot-row"><span class="sync-dot active"></span> Live Data Streaming</div>
+          </div>
+          <button class="btn-primary sm">Sync Now</button>
+        </div>
+
+        <!-- Live Metrics -->
+        <div class="section-header"><h3>Real-time Metrics</h3></div>
+        <div class="wearable-metrics">
+          <div class="wm-card glass-card">
+            <div class="wm-icon heart-beat">❤️</div>
+            <div class="wm-val">72</div>
+            <div class="wm-label">BPM</div>
+            <svg viewBox="0 0 80 30" width="100%" height="30">
+              <polyline fill="none" stroke="#EF4444" stroke-width="2" points="0,15 10,15 15,5 20,25 25,10 30,20 35,15 80,15"/>
+            </svg>
+          </div>
+          <div class="wm-card glass-card">
+            <div class="wm-icon">🩸</div>
+            <div class="wm-val">98%</div>
+            <div class="wm-label">SpO₂</div>
+            <div class="wm-good">Normal</div>
+          </div>
+          <div class="wm-card glass-card">
+            <div class="wm-icon">👟</div>
+            <div class="wm-val">7,234</div>
+            <div class="wm-label">Steps</div>
+            <div class="wm-prog"><div style="width:72%;background:linear-gradient(90deg,#10B981,#3B82F6);height:100%;border-radius:4px"></div></div>
+          </div>
+          <div class="wm-card glass-card">
+            <div class="wm-icon">🔥</div>
+            <div class="wm-val">342</div>
+            <div class="wm-label">Kcal Burned</div>
+            <div class="wm-good">Active</div>
+          </div>
+        </div>
+
+        <!-- Sleep Tracking -->
+        <div class="section-header"><h3>Sleep Tracking</h3></div>
+        <div class="sleep-card glass-card">
+          <div class="sleep-header-row">
+            <div><p>Last Night</p><h3>7h 23m</h3><span class="badge badge-green">Good Sleep</span></div>
+            <div class="sleep-score-ring">
+              <svg viewBox="0 0 80 80" width="80" height="80">
+                <circle cx="40" cy="40" r="30" fill="none" stroke="rgba(124,58,237,0.2)" stroke-width="7"/>
+                <circle cx="40" cy="40" r="30" fill="none" stroke="#7C3AED" stroke-width="7"
+                  stroke-dasharray="188" stroke-dashoffset="47" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <span class="sleep-score-num">75</span>
+            </div>
+          </div>
+          <div class="sleep-stages">
+            <div class="sleep-stage"><span style="background:#7C3AED"></span><p>Deep</p><span>2h 10m</span></div>
+            <div class="sleep-stage"><span style="background:#3B82F6"></span><p>REM</p><span>1h 45m</span></div>
+            <div class="sleep-stage"><span style="background:#10B981"></span><p>Light</p><span>3h 28m</span></div>
+          </div>
+        </div>
+        <div style="height:30px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== COMMUNITY & SOCIAL ========== -->
+    <div class="screen" id="screen-community">
+      <div class="risk-header"><button class="back-btn" onclick="navigateTo('screen-home')">←</button><h2>Community</h2></div>
+      <div class="community-scroll">
+        <!-- Leaderboard -->
+        <div class="section-header"><h3>🏆 Weekly Leaderboard</h3></div>
+        <div class="leaderboard glass-card">
+          <div class="lb-item gold"><span class="lb-rank">🥇</span><div class="lb-avatar gold">P</div><div class="lb-info"><p>Priya K.</p><span>15,234 steps</span></div><span class="lb-pts">1,520 pts</span></div>
+          <div class="lb-item silver"><span class="lb-rank">🥈</span><div class="lb-avatar silver">R</div><div class="lb-info"><p>Rahul M.</p><span>14,890 steps</span></div><span class="lb-pts">1,489 pts</span></div>
+          <div class="lb-item bronze"><span class="lb-rank">🥉</span><div class="lb-avatar bronze">S</div><div class="lb-info"><p>Sara J.</p><span>13,500 steps</span></div><span class="lb-pts">1,350 pts</span></div>
+          <div class="lb-item you"><span class="lb-rank">#12</span><div class="lb-avatar you">A</div><div class="lb-info"><p>You</p><span>7,234 steps</span></div><span class="lb-pts">723 pts</span></div>
+        </div>
+
+        <!-- Active Challenges -->
+        <div class="section-header"><h3>🎯 Group Challenges</h3></div>
+        <div class="group-challenge glass-card">
+          <h4>10K Steps Daily – Week 3</h4>
+          <p>1,284 participants worldwide</p>
+          <div class="gc-bar"><div class="gc-fill" style="width:65%"></div></div>
+          <div class="gc-foot"><span>Day 17 of 21</span><button class="btn-primary sm">Join</button></div>
+        </div>
+        <div class="group-challenge glass-card">
+          <h4>No Sugar Week</h4>
+          <p>892 participants</p>
+          <div class="gc-bar"><div class="gc-fill" style="width:43%; background:linear-gradient(90deg,#10B981,#06B6D4)"></div></div>
+          <div class="gc-foot"><span>Day 3 of 7</span><button class="btn-primary sm">Join</button></div>
+        </div>
+
+        <!-- Community Feed -->
+        <div class="section-header"><h3>Community Feed</h3></div>
+        <div class="community-feed">
+          <div class="feed-item glass-card">
+            <div class="feed-avatar" style="background:linear-gradient(135deg,#10B981,#3B82F6)">P</div>
+            <div class="feed-content">
+              <p class="feed-user">Priya K. <span class="feed-time">2h ago</span></p>
+              <p>Just hit 15K steps today! NutriAI's goal tracker is 🔥 Who else is crushing it?</p>
+              <div class="feed-reactions"><span>❤️ 24</span><span>💬 8</span><span>🔁 3</span></div>
+            </div>
+          </div>
+          <div class="feed-item glass-card">
+            <div class="feed-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">R</div>
+            <div class="feed-content">
+              <p class="feed-user">Rahul M. <span class="feed-time">4h ago</span></p>
+              <p>AI food scanner detected I was eating too much sodium. Switched to salads and my BP dropped! Amazing tech 🧠</p>
+              <div class="feed-reactions"><span>❤️ 47</span><span>💬 12</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:30px;"></div>
+      </div>
+    </div>
+
+    <!-- ========== ADMIN DASHBOARD ========== -->
+    <div class="screen wide" id="screen-admin">
+      <div class="admin-layout">
+        <!-- Admin Sidebar -->
+        <div class="admin-sidebar">
+          <div class="admin-logo">🧬 NutriAI Admin</div>
+          <nav class="admin-nav">
+            <a class="admin-nav-item active">📊 Dashboard</a>
+            <a class="admin-nav-item">👥 Users</a>
+            <a class="admin-nav-item">🍎 Food DB</a>
+            <a class="admin-nav-item">🧠 AI Models</a>
+            <a class="admin-nav-item">📈 Analytics</a>
+            <a class="admin-nav-item">⚙️ Settings</a>
+          </nav>
+        </div>
+        <!-- Admin Main -->
+        <div class="admin-main">
+          <div class="admin-topbar">
+            <div>
+              <h2>Admin Dashboard</h2>
+              <p>Real-time monitoring & analytics</p>
+            </div>
+            <div class="admin-topbar-actions">
+              <button class="btn-primary sm" onclick="navigateTo('screen-home')">← Back to App</button>
+            </div>
+          </div>
+          <!-- KPI Cards -->
+          <div class="admin-kpis">
+            <div class="kpi-card glass-card"><div class="kpi-icon">👥</div><div class="kpi-info"><div class="kpi-val">12,481</div><div class="kpi-label">Total Users</div></div><div class="kpi-trend good">↑ 12%</div></div>
+            <div class="kpi-card glass-card"><div class="kpi-icon">🔬</div><div class="kpi-info"><div class="kpi-val">89,342</div><div class="kpi-label">Food Scans</div></div><div class="kpi-trend good">↑ 8%</div></div>
+            <div class="kpi-card glass-card"><div class="kpi-icon">🧠</div><div class="kpi-info"><div class="kpi-val">94.2%</div><div class="kpi-label">AI Accuracy</div></div><div class="kpi-trend good">→ Stable</div></div>
+            <div class="kpi-card glass-card"><div class="kpi-icon">⚠️</div><div class="kpi-info"><div class="kpi-val">1,234</div><div class="kpi-label">Risk Alerts</div></div><div class="kpi-trend warn">↑ 3%</div></div>
+          </div>
+          <!-- Charts Row -->
+          <div class="admin-charts-row">
+            <div class="admin-chart-card glass-card">
+              <h4>Disease Risk Distribution</h4>
+              <div class="admin-pie">
+                <svg viewBox="0 0 100 100" width="150" height="150">
+                  <circle r="40" cx="50" cy="50" fill="transparent" stroke="#EF4444" stroke-width="20" stroke-dasharray="88 164" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                  <circle r="40" cx="50" cy="50" fill="transparent" stroke="#F59E0B" stroke-width="20" stroke-dasharray="62 190" stroke-dashoffset="-88" transform="rotate(-90 50 50)"/>
+                  <circle r="40" cx="50" cy="50" fill="transparent" stroke="#3B82F6" stroke-width="20" stroke-dasharray="45 207" stroke-dashoffset="-150" transform="rotate(-90 50 50)"/>
+                  <circle r="40" cx="50" cy="50" fill="transparent" stroke="#10B981" stroke-width="20" stroke-dasharray="57 195" stroke-dashoffset="-195" transform="rotate(-90 50 50)"/>
+                </svg>
+                <div class="admin-pie-legend">
+                  <div class="apl-item"><span style="background:#EF4444"></span>Heart: 35%</div>
+                  <div class="apl-item"><span style="background:#F59E0B"></span>Diabetes: 25%</div>
+                  <div class="apl-item"><span style="background:#3B82F6"></span>BP: 18%</div>
+                  <div class="apl-item"><span style="background:#10B981"></span>Obesity: 22%</div>
+                </div>
+              </div>
+            </div>
+            <div class="admin-chart-card glass-card">
+              <h4>User Growth (6 months)</h4>
+              <svg viewBox="0 0 250 100" width="100%" height="100">
+                <defs><linearGradient id="ugGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3B82F6" stop-opacity="0.4"/><stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,80 L40,70 L80,60 L120,45 L160,35 L200,25 L250,18" fill="none" stroke="#3B82F6" stroke-width="2.5"/>
+                <path d="M0,80 L40,70 L80,60 L120,45 L160,35 L200,25 L250,18 L250,100 L0,100Z" fill="url(#ugGrad)"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Users Table -->
+          <div class="admin-table-card glass-card">
+            <div class="table-header"><h4>Recent Users</h4><button class="btn-ghost sm">Export CSV</button></div>
+            <table class="admin-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Risk Level</th><th>Scans</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Aarav Sharma</td><td>aarav@example.com</td><td><span class="badge badge-green">Low</span></td><td>47</td><td><span class="badge badge-blue">Active</span></td></tr>
+                <tr><td>Priya Kumar</td><td>priya@example.com</td><td><span class="badge badge-warn">Medium</span></td><td>83</td><td><span class="badge badge-blue">Active</span></td></tr>
+                <tr><td>Rahul Mehta</td><td>rahul@example.com</td><td><span class="badge badge-red">High</span></td><td>102</td><td><span class="badge badge-warn">Flagged</span></td></tr>
+                <tr><td>Sara Joshi</td><td>sara@example.com</td><td><span class="badge badge-green">Low</span></td><td>34</td><td><span class="badge badge-blue">Active</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+  </div><!-- /app-shell -->
+
+  <!-- Firebase + Backend Modules (ES Modules) -->
+  <script type="module" src="backend/firebase-config.js"></script>
+  <script type="module" src="backend/firebase-db.js"></script>
+  <script type="module" src="backend/firebase-auth.js"></script>
+  <script type="module" src="backend/gemini-chat.js"></script>
+
+  <!-- Main App Logic -->
+  <script type="module" src="frontend/app.js"></script>
+</body>
+</html>
