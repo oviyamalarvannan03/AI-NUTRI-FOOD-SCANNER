@@ -1,0 +1,39 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.project
+.idea/
+.vscode/
+*.iml
+
+# Tooling-related
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Flutter/Android/iOS/web/windows/macos/linux builds
+build/
+
+# Android-specific
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/local.properties
+
+# iOS/macOS-specific
+ios/.symlinks/
+ios/Pods/
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+macos/Flutter/ephemeral/
+
+# Logs
+flutter_01.log
+build_log.txt

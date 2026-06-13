@@ -1,0 +1,43 @@
+name: NutriAI E2E & Security Test Verification
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Verify Test Reports
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl
+
+      - name: Publish Test Results to Job Summary
+        run: |
+          python tests/publish_results.py
+
+      - name: Upload E2E Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: E2E-Test-Report
+          path: tests/reports/Appium_Android_E2E_Test_Report.xlsx
+
+      - name: Upload Security Vulnerabilities Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Security-Vulnerabilities-Report
+          path: tests/reports/Vulnerability_Security_Report.xlsx
