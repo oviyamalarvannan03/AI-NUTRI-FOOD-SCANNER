@@ -1,0 +1,26 @@
+# Large files
+/flutter_sdk.zip
+/gradle-8.5-bin.zip
+
+# Flutter mobile ignore rules
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/flutter_01.log
+mobile/build_log.txt
+mobile/android/.gradle/
+mobile/android/local.properties
+
+# Firebase Cache/Config
+.firebase/
+
+# IDE files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
