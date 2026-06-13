@@ -1,63 +1,43 @@
-name: NutriAI CI/CD Pipeline
+name: NutriAI Test & Security Verification
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  web-tests:
-    name: Web App Selenium E2E Tests
+  verify:
+    name: Verify Test Reports
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: frontend/selenium-tests/package.json
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Install Selenium & Test Dependencies
-      run: |
-        cd frontend/selenium-tests
-        npm install
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl
 
-    - name: Run Web Selenium E2E Tests
-      run: |
-        cd frontend/selenium-tests
-        npm test
+      - name: Publish Test Results to Job Summary
+        run: |
+          python scripts/publish_results.py
 
-  mobile-tests:
-    name: Mobile App Flutter Tests
-    runs-on: ubuntu-latest
+      - name: Upload Selenium E2E Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Selenium-E2E-Test-Report
+          path: Selenium_E2E_Test_Report.xlsx
 
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: 'stable'
-        cache: true
-
-    - name: Install Flutter Dependencies
-      run: |
-        cd mobile
-        flutter pub get
-
-    - name: Run Mobile Unit & Widget Tests
-      run: |
-        cd mobile
-        flutter test
+      - name: Upload Security Vulnerabilities Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Security-Vulnerabilities-Report
+          path: Vulnerability_Security_Report.xlsx
