@@ -1,1 +1,1 @@
-E2E and Seurity Test
+E2E and Security Test
