@@ -57,31 +57,93 @@ export async function updateUserProfile(uid, updates) {
 
 export async function saveFoodScan(uid, scanData) {
   try {
-    const scansRef = collection(db, 'scans', uid, 'history');
-    const docRef = await addDoc(scansRef, {
-      ...scanData,
-      timestamp: serverTimestamp()
+    // Generate a unique scan ID
+    const scansCollectionRef = collection(db, 'food_scans');
+    const docRef = await addDoc(scansCollectionRef, {
+      userId: uid,
+      foodName: scanData.food,
+      calories: scanData.calories || 0,
+      protein: scanData.macros?.protein || 0,
+      carbohydrates: scanData.macros?.carbs || 0,
+      fat: scanData.macros?.fat || 0,
+      fiber: scanData.nutrients?.fiber || 0,
+      sugar: scanData.nutrients?.sugar || 0,
+      sodium: scanData.nutrients?.sodium || 0,
+      confidence: scanData.healthScore ? `${scanData.healthScore}%` : '75%',
+      imageUrl: scanData.imageUrl || '',
+      scanDate: serverTimestamp()
     });
 
-    // Update daily calories in user's today document
+    // Update daily nutrition statistics in daily_nutrition collection
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const dailyDocRef = doc(db, 'daily_nutrition', `${uid}_${todayStr}`);
+    
+    const dailySnap = await getDoc(dailyDocRef);
+    const existingStats = dailySnap.exists() ? dailySnap.data() : {
+      userId: uid,
+      date: todayStr,
+      totalCalories: 0,
+      totalProtein: 0,
+      totalCarbs: 0,
+      totalFat: 0
+    };
+
+    await setDoc(dailyDocRef, {
+      userId: uid,
+      date: todayStr,
+      totalCalories: (existingStats.totalCalories || 0) + (scanData.calories || 0),
+      totalProtein: (existingStats.totalProtein || 0) + (scanData.macros?.protein || 0),
+      totalCarbs: (existingStats.totalCarbs || 0) + (scanData.macros?.carbs || 0),
+      totalFat: (existingStats.totalFat || 0) + (scanData.macros?.fat || 0)
+    }, { merge: true });
+
+    // Backward compatibility updates for dailyStats structure
     await updateDailyStats(uid, {
       caloriesAdded: scanData.calories || 0
     });
 
-    showToast('💾 Scan saved to your history!', 'success');
+    showToast('💾 Scan saved to Firebase!', 'success');
     return docRef.id;
   } catch (err) {
     console.error('saveFoodScan error:', err);
+    throw err;
   }
 }
 
 export async function getRecentScans(uid, limitCount = 10) {
   try {
-    const scansRef = collection(db, 'scans', uid, 'history');
-    const q = query(scansRef, orderBy('timestamp', 'desc'), limit(limitCount));
+    const scansRef = collection(db, 'food_scans');
+    const { where } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const q = query(
+      scansRef, 
+      where('userId', '==', uid), 
+      orderBy('scanDate', 'desc'), 
+      limit(limitCount)
+    );
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Map fields backwards so the app logic consumes properties without breaking
+    return snapshot.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        food: data.foodName,
+        calories: data.calories,
+        healthScore: data.confidence ? parseInt(data.confidence) : 75,
+        imageUrl: data.imageUrl,
+        timestamp: data.scanDate,
+        macros: {
+          carbs: data.carbohydrates,
+          fat: data.fat,
+          protein: data.protein
+        },
+        nutrients: {
+          sodium: data.sodium,
+          sugar: data.sugar,
+          fiber: data.fiber
+        }
+      };
+    });
   } catch (err) {
     console.error('getRecentScans error:', err);
     return [];

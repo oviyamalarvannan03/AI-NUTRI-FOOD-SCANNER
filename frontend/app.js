@@ -466,13 +466,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // Save scan to Firestore & Update dashboard stats!
         const user = window._nutriUser;
         if (user) {
+          let imageUrl = '';
+          if (selectedImageBase64) {
+            try {
+              showToast('📤 Uploading image to Firebase...', 'info');
+              const { uploadFoodImage } = await import('../backend/firebase-storage.js');
+              imageUrl = await uploadFoodImage(user.uid, selectedImageBase64, selectedImageMimeType || 'image/jpeg');
+            } catch (uploadErr) {
+              console.warn('Image upload failed, saving scan document without image URL:', uploadErr);
+            }
+          }
+
           await saveFoodScan(user.uid, {
             food:        foodResult.name,
             emoji:       foodResult.emoji || '🍽️',
             calories:    foodResult.calories,
             healthScore: foodResult.score,
             macros:      foodResult.macros || { carbs: 30, fat: 10, protein: 15 },
-            nutrients:   foodResult.nutrients || { sodium: 0, sugar: 0, fiber: 0, cholesterol: 0, vitaminA: 0, calcium: 0 }
+            nutrients:   foodResult.nutrients || { sodium: 0, sugar: 0, fiber: 0, cholesterol: 0, vitaminA: 0, calcium: 0 },
+            imageUrl:    imageUrl
           });
 
           // Add to daily stats
@@ -1641,8 +1653,108 @@ function getLocalNutritionData(label) {
 // ANALYTICS INITIALIZATION
 // =============================================
 
-function initAnalytics() {
+async function initAnalytics() {
   animateProgressBars();
+  const user = window._nutriUser;
+  if (!user) return;
+
+  try {
+    const profile = window._nutriProfile || {};
+    const stats = window._nutriDailyStats || {};
+    
+    // Update BMI values dynamically on Analytics Screen
+    const bmiValEl = document.querySelector('#screen-analytics .bmi-value');
+    const bmiCatEl = document.querySelector('#screen-analytics .bmi-category');
+    const bmiPointer = document.querySelector('#screen-analytics .bmi-pointer');
+    
+    if (profile.bmi) {
+      if (bmiValEl) bmiValEl.textContent = profile.bmi;
+      let category = 'Normal Weight';
+      let badgeClass = 'badge-green';
+      let pointerLeft = '48%';
+      
+      const bmi = parseFloat(profile.bmi);
+      if (bmi < 18.5) {
+        category = 'Underweight';
+        badgeClass = 'badge-blue';
+        pointerLeft = '12%';
+      } else if (bmi < 25) {
+        category = 'Normal Weight';
+        badgeClass = 'badge-green';
+        pointerLeft = '37%';
+      } else if (bmi < 30) {
+        category = 'Overweight';
+        badgeClass = 'badge-warn';
+        pointerLeft = '62%';
+      } else {
+        category = 'Obese';
+        badgeClass = 'badge-red';
+        pointerLeft = '87%';
+      }
+      
+      if (bmiCatEl) {
+        bmiCatEl.textContent = category;
+        bmiCatEl.className = `bmi-category badge ${badgeClass}`;
+      }
+      if (bmiPointer) {
+        bmiPointer.style.left = pointerLeft;
+      }
+    }
+
+    // Load and render weekly trends
+    const { getWeeklyStats } = await import('../backend/firebase-db.js');
+    const weeklyData = await getWeeklyStats(user.uid);
+    
+    if (weeklyData && weeklyData.length > 0) {
+      // Calculate average calories
+      const totalCaloriesSum = weeklyData.reduce((acc, curr) => acc + (curr.calories || 0), 0);
+      const avgCalories = Math.round(totalCaloriesSum / weeklyData.length);
+      const avgCalEl = document.querySelector('#screen-analytics .analytics-stat:nth-child(1) .as-val');
+      if (avgCalEl) {
+        avgCalEl.textContent = avgCalories.toLocaleString();
+      }
+
+      // Update avg water
+      const totalWaterSum = weeklyData.reduce((acc, curr) => acc + (curr.water || 0), 0);
+      const avgWater = (totalWaterSum / weeklyData.length).toFixed(1);
+      const avgWaterEl = document.querySelector('#screen-analytics .analytics-stat:nth-child(3) .as-val');
+      if (avgWaterEl) {
+        avgWaterEl.textContent = `${avgWater}L`;
+      }
+
+      // Update weekly calories graph SVG points based on actual values
+      // We scale height: 120px max represents 3000 calories. So y = 120 - (cal / 3000) * 120
+      const points = [];
+      const xSpacing = 320 / (weeklyData.length - 1);
+      weeklyData.forEach((day, index) => {
+        const cal = day.calories || 0;
+        const x = Math.round(index * xSpacing);
+        const y = Math.round(120 - Math.min((cal / 3000) * 120, 120));
+        points.push(`${x},${y}`);
+      });
+
+      const pathEl = document.querySelector('#screen-analytics .trend-chart svg path:nth-child(2)');
+      const fillPathEl = document.querySelector('#screen-analytics .trend-chart svg path:nth-child(3)');
+      const circleEl = document.querySelector('#screen-analytics .trend-chart svg circle');
+      
+      if (points.length > 0) {
+        // Construct SVG path descriptor
+        const pathDescriptor = `M ${points.join(' L ')}`;
+        if (pathEl) pathEl.setAttribute('d', pathDescriptor);
+        if (fillPathEl) {
+          const fillDescriptor = `${pathDescriptor} L 320,120 L 0,120 Z`;
+          fillPathEl.setAttribute('d', fillDescriptor);
+        }
+        if (circleEl) {
+          const lastPoint = points[points.length - 1].split(',');
+          circleEl.setAttribute('cx', lastPoint[0]);
+          circleEl.setAttribute('cy', lastPoint[1]);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('initAnalytics error:', err);
+  }
 }
 
 // =============================================

@@ -27,13 +27,12 @@
 
 // ⚠️ REAL FIREBASE CONFIG:
 const firebaseConfig = {
-  apiKey: "AIzaSyBGXYH3Sc0AH1HjW-t5MxOMnsa3I1S8iOQ",
-  authDomain: "nutri-ai-scanner.firebaseapp.com",
-  projectId: "nutri-ai-scanner",
-  storageBucket: "nutri-ai-scanner.firebasestorage.app",
-  messagingSenderId: "602975199072",
-  appId: "1:602975199072:web:a0ea09761d39efcdaa0805",
-  measurementId: "G-Z8LLQT27NX"
+  apiKey: "AIzaSyB2NMiF9-a3GSt0X2qIO1SuTr0uIPF2iZo",
+  authDomain: "nutri-ai-scanner-bc363.firebaseapp.com",
+  projectId: "nutri-ai-scanner-bc363",
+  storageBucket: "nutri-ai-scanner-bc363.firebasestorage.app",
+  messagingSenderId: "875349047347",
+  appId: "1:875349047347:web:1a951edb4b123a3b574b46"
 };
 
 // ⚠️ REPLACE WITH YOUR GEMINI API KEY:
@@ -43,9 +42,11 @@ const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 import { initializeApp }              from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth }                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore }               from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage }                 from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 const firebaseApp = initializeApp(firebaseConfig);
 const auth        = getAuth(firebaseApp);
 const db          = getFirestore(firebaseApp);
+const storage     = getStorage(firebaseApp);
 
-export { auth, db, GEMINI_API_KEY };
+export { auth, db, storage, GEMINI_API_KEY };
