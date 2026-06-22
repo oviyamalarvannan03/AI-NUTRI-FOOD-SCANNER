@@ -15,7 +15,9 @@ import {
   limit,
   getDocs,
   updateDoc,
-  serverTimestamp
+  serverTimestamp,
+  onSnapshot,
+  where
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 import { db } from './firebase-config.js';
@@ -113,7 +115,6 @@ export async function saveFoodScan(uid, scanData) {
 export async function getRecentScans(uid, limitCount = 10) {
   try {
     const scansRef = collection(db, 'food_scans');
-    const { where } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     const q = query(
       scansRef, 
       where('userId', '==', uid), 
@@ -244,4 +245,56 @@ export async function getWeeklyStats(uid) {
     console.error('getWeeklyStats error:', err);
     return [];
   }
+}
+
+// ─── Real-Time Subscriptions ──────────────────
+
+export function subscribeToDailyStats(uid, callback) {
+  const todayKey = getTodayKey();
+  const statsRef = doc(db, 'dailyStats', uid, 'days', todayKey);
+  return onSnapshot(statsRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data());
+    } else {
+      callback({ calories: 0, water: 0, steps: 0, scansCount: 0 });
+    }
+  }, (err) => {
+    console.error("subscribeToDailyStats error:", err);
+  });
+}
+
+export function subscribeToRecentScans(uid, limitCount = 5, callback) {
+  const scansRef = collection(db, 'food_scans');
+  const q = query(
+    scansRef,
+    where('userId', '==', uid),
+    orderBy('scanDate', 'desc'),
+    limit(limitCount)
+  );
+  return onSnapshot(q, (snapshot) => {
+    const scans = snapshot.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        food: data.foodName,
+        calories: data.calories,
+        healthScore: data.confidence ? parseInt(data.confidence) : 75,
+        imageUrl: data.imageUrl,
+        timestamp: data.scanDate,
+        macros: {
+          carbs: data.carbohydrates,
+          fat: data.fat,
+          protein: data.protein
+        },
+        nutrients: {
+          sodium: data.sodium,
+          sugar: data.sugar,
+          fiber: data.fiber
+        }
+      };
+    });
+    callback(scans);
+  }, (err) => {
+    console.error("subscribeToRecentScans error:", err);
+  });
 }

@@ -5,8 +5,10 @@
 
 // ─── Backend Imports ─────────────────────────
 import { loginWithEmail, signupWithEmail, loginWithGoogle, logoutUser, initAuthObserver, sendPasswordReset } from '../backend/firebase-auth.js';
-import { saveFoodScan, getRecentScans, getDailyStats, getRiskData, saveRiskData, updateDailyStats, saveUserProfile, getUserProfile } from '../backend/firebase-db.js';
+import { saveFoodScan, getRecentScans, getDailyStats, getRiskData, saveRiskData, updateDailyStats, saveUserProfile, getUserProfile, subscribeToDailyStats, subscribeToRecentScans } from '../backend/firebase-db.js';
 import { sendToGemini, clearChatHistory, analyzeFoodImage, generateDesiSwapSuggestion, getGeminiApiKey } from '../backend/gemini-chat.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { auth } from '../backend/firebase-config.js';
 
 // =============================================
 // SCREEN NAVIGATION SYSTEM
@@ -118,7 +120,8 @@ function initScreen(screenId) {
       initSettings();
       break;
     case 'screen-wearable':
-      initWearableSync();
+      // Disabled - Wearable integrations removed
+      navigateTo('screen-home');
       break;
     case 'screen-risk':
       initRiskScreen();
@@ -292,6 +295,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── Init auth state observer ──────────
   initAuthObserver();
+
+  // ─── Real-Time Firebase Listeners ──────
+  let unsubDailyStats = null;
+  let unsubRecentScans = null;
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if (!unsubDailyStats) {
+        unsubDailyStats = subscribeToDailyStats(user.uid, (stats) => {
+          window._nutriDailyStats = stats;
+          updateDashboardStats(stats);
+        });
+      }
+      if (!unsubRecentScans) {
+        unsubRecentScans = subscribeToRecentScans(user.uid, 50, (scans) => {
+          window._nutriRecentScans = scans;
+          updateDashboardRecentScans(scans);
+          updateScannerRecentScans(scans);
+        });
+      }
+    } else {
+      if (unsubDailyStats) { unsubDailyStats(); unsubDailyStats = null; }
+      if (unsubRecentScans) { unsubRecentScans(); unsubRecentScans = null; }
+      
+      // Reset dashboard to loading state
+      const calVal = document.getElementById('dashboard-calories-val');
+      const calBar = document.getElementById('dashboard-calories-bar');
+      const h2oVal = document.getElementById('dashboard-hydration-val');
+      const h2oBar = document.getElementById('dashboard-hydration-bar');
+      const container = document.getElementById('dashboard-scan-history');
+      if (calVal) calVal.textContent = '...';
+      if (calBar) calBar.style.width = '0%';
+      if (h2oVal) h2oVal.textContent = '...';
+      if (h2oBar) h2oBar.style.width = '0%';
+      if (container) {
+        container.innerHTML = '<div class="loading-state" style="text-align: center; color: rgba(255,255,255,0.6); font-size: 0.9rem;">Loading scans...</div>';
+      }
+    }
+  });
 
   // ─── Logout button (profile screen) ──────
   const logoutBtn = document.getElementById('logoutBtn');
@@ -685,56 +727,15 @@ async function initHome() {
   // Animate chart bars
   animateChartBars();
 
-  // ─── Load real daily stats from Firestore ─
+  // ─── Load real risk data from Firestore ───
   const user = window._nutriUser;
   if (user) {
     try {
-      const stats = await getDailyStats(user.uid);
-      window._nutriDailyStats = stats;
-
-      // Update calories display and progress bar
-      const calVal = document.querySelector('.stat-card:nth-child(1) .stat-val');
-      if (calVal && stats.calories !== undefined) {
-        calVal.textContent = stats.calories.toLocaleString();
-        
-        const calBarFill = document.querySelector('.stat-card:nth-child(1) .stat-bar-fill');
-        if (calBarFill) {
-          const profile = window._nutriProfile || {};
-          const dailyGoal = profile.dailyCalorieGoal || 2000;
-          const pct = Math.min((stats.calories / dailyGoal) * 100, 100);
-          calBarFill.style.width = `${pct}%`;
-        }
-      }
-
-      // Update water display and progress bar
-      const h2oVal = document.querySelector('.stat-card:nth-child(2) .stat-val');
-      if (h2oVal && stats.water !== undefined) {
-        h2oVal.textContent = `${stats.water.toFixed(1)}L`;
-        
-        const waterBarFill = document.querySelector('.stat-card:nth-child(2) .stat-bar-fill');
-        if (waterBarFill) {
-          const pct = Math.min((stats.water / 3.0) * 100, 100);
-          waterBarFill.style.width = `${pct}%`;
-        }
-      }
-
-      // Update steps display and progress bar
-      const stepsVal = document.querySelector('.stat-card:nth-child(3) .stat-val');
-      if (stepsVal && stats.steps !== undefined) {
-        stepsVal.textContent = stats.steps.toLocaleString();
-        
-        const stepsBarFill = document.querySelector('.stat-card:nth-child(3) .stat-bar-fill');
-        if (stepsBarFill) {
-          const pct = Math.min((stats.steps / 10000) * 100, 100);
-          stepsBarFill.style.width = `${pct}%`;
-        }
-      }
-
       // Load risk data
       let risks = await getRiskData(user.uid);
       if (!risks) {
         const profile = window._nutriProfile || {};
-        const recentScans = await getRecentScans(user.uid, 5);
+        const recentScans = window._nutriRecentScans || await getRecentScans(user.uid, 5);
         risks = calculateDynamicRisks(profile, recentScans);
         await saveRiskData(user.uid, risks);
       }
@@ -759,7 +760,7 @@ async function initHome() {
         }
       });
     } catch (err) {
-      console.warn('Could not load stats from Firestore:', err);
+      console.warn('Could not load risks from Firestore:', err);
     }
   }
 }
@@ -2801,4 +2802,136 @@ function getRiskFactorsList(type, profile, stats) {
     default:
       return [];
   }
+}
+
+// ─── Real-Time Dashboard UI Update Helpers ─────
+
+function updateDashboardStats(stats) {
+  // Update Hydration
+  const h2oVal = document.getElementById('dashboard-hydration-val');
+  const h2oBar = document.getElementById('dashboard-hydration-bar');
+  const water = stats.water || 0;
+  if (h2oVal) {
+    h2oVal.textContent = `${water.toFixed(1)}L`;
+  }
+  if (h2oBar) {
+    const pct = Math.min((water / 3.0) * 100, 100);
+    h2oBar.style.width = `${pct}%`;
+  }
+}
+
+function updateDashboardRecentScans(scans) {
+  const container = document.getElementById('dashboard-scan-history');
+  if (!container) return;
+
+  // Filter today's scans for calorie/nutrition sum
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  
+  const todayScans = (scans || []).filter(s => {
+    if (!s.timestamp) return true; // Treat local pending writes as today
+    const d = s.timestamp.toDate ? s.timestamp.toDate() : new Date(s.timestamp);
+    return d >= today;
+  });
+
+  const calories = todayScans.reduce((sum, s) => sum + (s.calories || 0), 0);
+
+  // Update Calories stat card
+  const calVal = document.getElementById('dashboard-calories-val');
+  const calBar = document.getElementById('dashboard-calories-bar');
+  if (calVal) calVal.textContent = calories.toLocaleString();
+  if (calBar) {
+    const profile = window._nutriProfile || {};
+    const dailyGoal = profile.dailyCalorieGoal || 2000;
+    const pct = Math.min((calories / dailyGoal) * 100, 100);
+    calBar.style.width = `${pct}%`;
+  }
+
+  // Update AI Health Score based on average of today's scans
+  const totalScans = todayScans.length;
+  const avgScore = totalScans > 0 
+    ? Math.round(todayScans.reduce((sum, s) => sum + (s.healthScore || 75), 0) / totalScans)
+    : 100;
+
+  const scoreVal = document.getElementById('dashboard-health-score-val');
+  const scoreBadge = document.getElementById('dashboard-health-score-badge');
+  const scoreRing = document.getElementById('dashboard-health-score-ring');
+  const scoreRingVal = document.getElementById('dashboard-health-score-ring-val');
+
+  if (scoreVal) scoreVal.innerHTML = `${avgScore}<span>/100</span>`;
+  if (scoreRingVal) scoreRingVal.textContent = `${avgScore}%`;
+  if (scoreRing) {
+    const offset = 251 - (251 * avgScore / 100);
+    scoreRing.style.strokeDashoffset = offset;
+  }
+  if (scoreBadge) {
+    let badgeText = "Excellent";
+    let badgeClass = "badge-green";
+    if (avgScore < 50) {
+      badgeText = "Needs Improvement";
+      badgeClass = "badge-red";
+    } else if (avgScore < 80) {
+      badgeText = "Good";
+      badgeClass = "badge-blue";
+    }
+    scoreBadge.textContent = badgeText;
+    scoreBadge.className = `badge ${badgeClass}`;
+  }
+
+  // Render recent scans list
+  const displayScans = (scans || []).slice(0, 5);
+  if (displayScans.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: rgba(255,255,255,0.6); font-size: 0.9rem; padding: 12px 0;">
+        📭 No food has been scanned today.
+      </div>
+    `;
+    return;
+  }
+
+  let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+  displayScans.forEach(s => {
+    const timestampStr = s.timestamp && typeof s.timestamp.toDate === 'function' 
+      ? s.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      : 'Just now';
+    
+    const imgHtml = s.imageUrl 
+      ? `<img src="${s.imageUrl}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" />`
+      : `<div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🥗</div>`;
+
+    html += `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          ${imgHtml}
+          <div>
+            <h4 style="margin: 0; font-size: 0.95rem; color: #fff;">${s.food || 'Unidentified Food'}</h4>
+            <p style="margin: 2px 0 0; font-size: 0.75rem; color: rgba(255,255,255,0.5);">
+              ${s.calories || 0} kcal · P: ${s.macros?.protein || 0}g · C: ${s.macros?.carbs || 0}g · F: ${s.macros?.fat || 0}g
+            </p>
+          </div>
+        </div>
+        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">${timestampStr}</span>
+      </div>
+    `;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function updateScannerRecentScans(scans) {
+  const container = document.querySelector('.scan-thumbs');
+  if (!container) return;
+
+  const displayScans = (scans || []).slice(0, 4);
+  if (displayScans.length === 0) {
+    container.innerHTML = '<span style="color:rgba(255,255,255,0.5); font-size:0.8rem;">No recent scans</span>';
+    return;
+  }
+
+  container.innerHTML = displayScans.map(s => {
+    const displayItem = s.imageUrl 
+      ? `<img src="${s.imageUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" />`
+      : '🥗';
+    return `<div class="scan-thumb" style="display:flex; align-items:center; justify-content:center; overflow:hidden;">${displayItem}</div>`;
+  }).join('');
 }
