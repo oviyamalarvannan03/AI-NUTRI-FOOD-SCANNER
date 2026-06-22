@@ -14,7 +14,6 @@ class FoodResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final scoreColor = foodItem.score >= 80
         ? const Color(0xFF10B981)
         : (foodItem.score >= 50 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
@@ -96,7 +95,51 @@ class FoodResultScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // Confidence + Category + DB Verified row (Ollama expert prompt only)
+            if (foodItem.confidence != null || foodItem.category != null || foodItem.databaseVerified != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    // Confidence badge
+                    if (foodItem.confidence != null)
+                      _metaBadge(
+                        icon: Icons.psychology_alt,
+                        label: "${foodItem.confidence}% Confident",
+                        bgColor: const Color(0xFF7C3AED),
+                        textColor: const Color(0xFFA855F7),
+                      ),
+                    // Database verified badge
+                    if (foodItem.databaseVerified != null)
+                      _metaBadge(
+                        icon: foodItem.databaseVerified!
+                            ? Icons.verified
+                            : Icons.help_outline,
+                        label: foodItem.databaseVerified!
+                            ? "In Food Database"
+                            : "Not in DB",
+                        bgColor: foodItem.databaseVerified!
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFF59E0B),
+                        textColor: foodItem.databaseVerified!
+                            ? const Color(0xFF34D399)
+                            : const Color(0xFFFBBF24),
+                      ),
+                    // Category badge
+                    if (foodItem.category != null)
+                      _metaBadge(
+                        icon: Icons.category_outlined,
+                        label: foodItem.category!,
+                        bgColor: const Color(0xFF0EA5E9),
+                        textColor: const Color(0xFF38BDF8),
+                      ),
+                  ],
+                ),
+              ),
 
             // Health Warnings / Badges
             if (foodItem.warnings.isNotEmpty) ...[
@@ -107,15 +150,100 @@ class FoodResultScreen extends StatelessWidget {
                   final isHealthy = w.toLowerCase().contains("balanced") || w.toLowerCase().contains("protein") || w.toLowerCase().contains("low");
                   return Chip(
                     label: Text(w, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-                    backgroundColor: isHealthy ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFEF4444).withOpacity(0.2),
+                    backgroundColor: isHealthy
+                      ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                      : const Color(0xFFEF4444).withValues(alpha: 0.2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 12),
+            ],
+
+            // Main Ingredients (Ollama expert prompt only)
+            if (foodItem.ingredients != null && foodItem.ingredients!.isNotEmpty) ...[
+              const Text("Main Ingredients", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: foodItem.ingredients!.map((ing) => Chip(
+                  label: Text(ing, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                  backgroundColor: const Color(0xFF1E293B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Colors.white12),
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                )).toList(),
+              ),
               const SizedBox(height: 20),
             ],
 
-            // Macro Metrics Info
+            // ── Low Confidence Alternatives ──────────────────────────────
+            if (foodItem.alternatives != null && foodItem.alternatives!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B), size: 18),
+                  const SizedBox(width: 6),
+                  const Expanded(
+                    child: Text(
+                      "Low confidence — could also be:",
+                      style: TextStyle(color: Color(0xFFFBBF24), fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ...foodItem.alternatives!.map((alt) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Text(alt.emoji, style: const TextStyle(fontSize: 26)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(alt.name,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14)),
+                          const SizedBox(height: 2),
+                          Text("~${alt.calories} kcal",
+                              style: const TextStyle(
+                                  color: Colors.white54, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        "${alt.confidence}%",
+                        style: const TextStyle(
+                            color: Color(0xFFFBBF24),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 16),
+            ],
+
             const Text("Macronutrients", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 12),
             _macroRow("Carbohydrates", "${foodItem.macros['carbs'] ?? 0}g", Colors.amber),
@@ -150,7 +278,7 @@ class FoodResultScreen extends StatelessWidget {
             const Text("Personalized AI Recommendation", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 12),
             Card(
-              color: const Color(0xFF7C3AED).withOpacity(0.15),
+              color: const Color(0xFF7C3AED).withValues(alpha: 0.15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: const BorderSide(color: Color(0xFF7C3AED), width: 1),
@@ -170,8 +298,39 @@ class FoodResultScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       foodItem.recommendation,
-                      style: const TextStyle(color: Colors.white90, fontSize: 13, height: 1.5),
-                    )
+                      style: const TextStyle(color: Color(0xFFECECEC), fontSize: 13, height: 1.5),
+                    ),
+                    // Diabetes risk note (Ollama expert prompt only)
+                    if (foodItem.diabetesRisk != null) ...[ 
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.bloodtype_outlined, color: Color(0xFFFBBF24), size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Diabetes Risk Note",
+                                      style: TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.bold, fontSize: 12)),
+                                  const SizedBox(height: 4),
+                                  Text(foodItem.diabetesRisk!,
+                                      style: const TextStyle(color: Color(0xFFECECEC), fontSize: 12, height: 1.4)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -210,6 +369,33 @@ class FoodResultScreen extends StatelessWidget {
         children: [
           Text(name, style: const TextStyle(color: Colors.white70)),
           Text(val, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  /// Reusable pill badge for confidence, DB-verified, and category chips.
+  Widget _metaBadge({
+    required IconData icon,
+    required String label,
+    required Color bgColor,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bgColor.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: bgColor.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: textColor),
+          const SizedBox(width: 5),
+          Text(label,
+              style: TextStyle(
+                  color: textColor, fontSize: 11, fontWeight: FontWeight.bold)),
         ],
       ),
     );

@@ -176,7 +176,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                                     Text(
                                       scanner.scannerEngine == 'cnn'
                                           ? "Processing food on-device with ML Kit..."
-                                          : "Analyzing food with Gemini AI Vision...",
+                                          : scanner.scannerEngine == 'ollama'
+                                              ? "Analyzing with Ollama local AI (${scanner.ollamaModel})..."
+                                              : scanner.scannerEngine == 'firebase'
+                                                  ? "Analyzing food with Firebase Cloud AI..."
+                                                  : "Analyzing food with Gemini AI Vision...",
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                     )
                                   ],

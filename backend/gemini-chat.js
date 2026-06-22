@@ -189,7 +189,9 @@ function getFoodEmoji(name) {
 export async function analyzeFoodImage(imageBase64, mimeType) {
   const activeKey = getGeminiApiKey();
   if (!activeKey || activeKey === 'YOUR_GEMINI_API_KEY') {
-    return 'Please add your Google AI API key in Settings to use the AI food scanner.';
+    // No valid key — signal app.js to use the client-side MobileNet fallback
+    console.log('⚠️ No Gemini API key set. Using on-device MobileNet scanner.');
+    return 'USE_MOBILENET_FALLBACK';
   }
 
   // Strip the data URI prefix if present (e.g. data:image/jpeg;base64,)
@@ -202,10 +204,19 @@ export async function analyzeFoodImage(imageBase64, mimeType) {
   const risks   = window._nutriRiskData || {};
 
   const systemPrompt = `You are NutriAI, an expert visual food scanner powered by Google Gemini AI. Analyze the food image provided.
+Identify the exact name of the food dish visible in the image.
+
+RULES:
+- Never return mock or simulated data. You must analyze the image directly and output real database-verified nutritional values.
+- Specifically identify food items accurately, including: samosa, cup cakes, donuts, french fries, ice cream, banana, apple, cashew, cherry, fig.
+- Categorize the food item as healthy or junk food:
+  - If it is a junk food (like samosa, donut, cup cake, french fries, ice cream, pizza, burger, chocolate, cake), append "🛑 Junk Food Detected" to the warnings.
+  - If it is a healthy food (like banana, apple, cashew, cherry, fig, salad, yogurt, salmon, chicken), append "☘️ Healthy Food" to the warnings.
+
 Return ONLY a valid JSON object with these exact fields:
 {
   "name": "Name of the food dish",
-  "emoji": "single emoji like \ud83e\udd57 or \ud83c\udf55",
+  "emoji": "single emoji like 🥗 or 🍕",
   "calories": 320,
   "score": 85,
   "serving": "1 plate",

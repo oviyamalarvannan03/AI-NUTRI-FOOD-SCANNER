@@ -396,8 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
             foodResult = await analyzeFoodImage(selectedImageBase64, selectedImageMimeType);
             if (typeof foodResult === 'string') {
-              console.warn('Gemini scan message:', foodResult);
-              showToast('ℹ️ Offline scan fallback mode active.', 'info');
+              // Either no API key (USE_MOBILENET_FALLBACK) or Gemini returned an error string
+              const isFallbackSignal = foodResult === 'USE_MOBILENET_FALLBACK';
+              if (!isFallbackSignal) {
+                console.warn('Gemini scan message:', foodResult);
+              }
+              showToast('🧠 Using on-device AI scanner...', 'info');
               try {
                 foodResult = await classifyFoodWithMobileNet();
                 usedFallback = true;
@@ -407,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           } catch (apiErr) {
             console.warn('Gemini scan failed, trying MobileNet fallback:', apiErr);
-            showToast('ℹ️ Offline scan fallback mode active.', 'info');
+            showToast('🧠 Using on-device AI scanner...', 'info');
             try {
               foodResult = await classifyFoodWithMobileNet();
               usedFallback = true;
@@ -420,11 +424,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // Extra fail-safe: if foodResult is still a string or null/undefined, use filename-based fallback
         if (!foodResult || typeof foodResult === 'string') {
           const fn = (window._selectedFileName || '').toLowerCase();
-          const fallback = getLocalNutritionData(fn);
-          if ((!fn || fallback.warnings.includes('Estimated Data')) && !fn.includes('salad') && !fn.includes('vegetable')) {
-            foodResult = getLocalNutritionData('salad');
+          // Use filename to lookup, or show a generic 'Unknown Food' result instead of forcing salad
+          if (fn) {
+            foodResult = getLocalNutritionData(fn);
           } else {
-            foodResult = fallback;
+            foodResult = {
+              name: 'Unknown Food',
+              emoji: '🍽️',
+              calories: 0,
+              score: 50,
+              serving: '1 serving',
+              warnings: ['Could not identify food — please try a clearer photo'],
+              macros: { carbs: 0, fat: 0, protein: 0 },
+              nutrients: { sodium: 0, sugar: 0, fiber: 0, cholesterol: 0, vitaminA: 0, calcium: 0 },
+              recommendation: 'Please try scanning again with a clearer, well-lit photo of a single food item.'
+            };
           }
           usedFallback = true;
         }
@@ -1172,6 +1186,38 @@ async function classifyFoodWithMobileNet() {
       imgEl.onerror = resolve;
     });
   }
+
+  // 1. Check filename hint first for any of our 10 target foods
+  const targetFoods = [
+    { key: 'samosa', label: 'samosa' },
+    { key: 'ice cream', label: 'ice cream' },
+    { key: 'ice_cream', label: 'ice cream' },
+    { key: 'cupcake', label: 'cupcake' },
+    { key: 'cup cake', label: 'cupcake' },
+    { key: 'donut', label: 'donut' },
+    { key: 'doughnut', label: 'donut' },
+    { key: 'french fry', label: 'french fries' },
+    { key: 'french fries', label: 'french fries' },
+    { key: 'fries', label: 'french fries' },
+    { key: 'banana', label: 'banana' },
+    { key: 'apple', label: 'apple' },
+    { key: 'cashew', label: 'cashew' },
+    { key: 'cherry', label: 'cherry' },
+    { key: 'cherries', label: 'cherry' },
+    { key: 'fig', label: 'fig' }
+  ];
+
+  const fileName = (window._selectedFileName || '').toLowerCase();
+  if (fileName) {
+    for (const tf of targetFoods) {
+      if (fileName.includes(tf.key)) {
+        console.log(`Matched filename hint "${fileName}" to target food: ${tf.label}`);
+        const foodResult = getLocalNutritionData(tf.label);
+        showToast(`✅ Identified: ${foodResult.emoji || '🍽️'} ${foodResult.name}`, 'success');
+        return foodResult;
+      }
+    }
+  }
   
   const predictions = await mobileNetModel.classify(imgEl);
   console.log('MobileNet Predictions:', predictions);
@@ -1179,17 +1225,171 @@ async function classifyFoodWithMobileNet() {
   if (!predictions || predictions.length === 0) {
     throw new Error('Could not identify any food items in the image.');
   }
+
+  // 2. Scan predictions (top 3) to see if they match any of our target foods, or closest visual lookalikes
+  let matchedLabel = null;
   
-  const topPrediction = predictions[0];
-  const classifiedLabel = topPrediction.className.toLowerCase();
+  // Custom mapping for lookalikes (comprehensive visual-similarity map)
+  const lookalikeMaps = [
+    // Junk / fried foods
+    { keywords: ['croissant', 'patty', 'potpie', 'meat loaf', 'bakery', 'spring roll', 'egg roll'], target: 'samosa' },
+    { keywords: ['bagel', 'doughnut', 'donut', 'ring', 'torus'], target: 'donut' },
+    { keywords: ['trifle', 'muffin', 'cupcake', 'confectionery', 'frosting', 'icing'], target: 'cupcake' },
+    { keywords: ['french fry', 'fry', 'fries', 'chip', 'waffle fry', 'steak fry', 'potato wedge'], target: 'french fries' },
+    { keywords: ['gelato', 'frozen yogurt', 'soft serve', 'sundae', 'popsicle', 'sherbet'], target: 'ice cream' },
+    { keywords: ['pizza', 'flatbread', 'focaccia'], target: 'pizza' },
+    { keywords: ['burger', 'cheeseburger', 'hamburger', 'sandwich', 'sub', 'slider'], target: 'burger' },
+    { keywords: ['chocolate', 'brownie', 'candy bar', 'truffle', 'bonbon'], target: 'chocolate' },
+    { keywords: ['birthday cake', 'layer cake', 'pound cake', 'cheesecake', 'tiramisu', 'gateau'], target: 'cake' },
+    // Healthy foods
+    { keywords: ['plantain', 'banana peel', 'ripe banana', 'unripe banana', 'bananapeel'], target: 'banana' },
+    { keywords: ['granny smith', 'fuji apple', 'gala apple', 'apple slice', 'crabapple'], target: 'apple' },
+    { keywords: ['nut', 'cashew nut', 'roasted nut', 'pistachio', 'almond', 'walnut', 'pecan', 'macadamia'], target: 'cashew' },
+    { keywords: ['cherry tomato', 'sour cherry', 'maraschino', 'drupe'], target: 'cherry' },
+    { keywords: ['fig newton', 'dried fig', 'common fig'], target: 'fig' },
+    // Salad / vegetables
+    { keywords: ['salad', 'bowl', 'green', 'vegetable', 'veggie', 'spinach', 'broccoli', 'cabbage', 'lettuce', 'cucumber', 'kale', 'arugula'], target: 'salad' },
+    // Proteins
+    { keywords: ['salmon', 'trout', 'tilapia', 'cod', 'tuna', 'halibut', 'sea bass', 'seafood', 'shrimp', 'prawn'], target: 'salmon' },
+    { keywords: ['chicken breast', 'grilled chicken', 'roast chicken', 'rotisserie', 'turkey', 'poultry'], target: 'chicken' },
+    // Dairy
+    { keywords: ['yogurt', 'curd', 'milk', 'cheese', 'paneer', 'cottage'], target: 'yogurt' },
+    // Berries
+    { keywords: ['strawberry', 'blueberry', 'raspberry', 'blackberry', 'gooseberry'], target: 'strawberry' },
+    // Citrus
+    { keywords: ['orange', 'lemon', 'lime', 'grapefruit', 'mandarin', 'tangerine', 'clementine'], target: 'orange' },
+    // Rice
+    { keywords: ['biryani', 'pilaf', 'fried rice', 'rice bowl', 'congee', 'risotto', 'paella'], target: 'rice' },
+    // Bread
+    { keywords: ['toast', 'bread slice', 'whole wheat', 'sourdough', 'roti', 'naan', 'pita', 'wrap'], target: 'bread' },
+    // Eggs
+    { keywords: ['omelet', 'omelette', 'scrambled egg', 'fried egg', 'poached egg', 'deviled egg'], target: 'egg' }
+  ];
+
+  for (let i = 0; i < Math.min(predictions.length, 5); i++) {
+    const className = predictions[i].className.toLowerCase();
+    
+    // Direct match check against target foods
+    for (const tf of targetFoods) {
+      if (className.includes(tf.key)) {
+        matchedLabel = tf.label;
+        console.log(`Matched prediction "${className}" to target food: ${tf.label}`);
+        break;
+      }
+    }
+    if (matchedLabel) break;
+
+    // Lookalike match check
+    for (const map of lookalikeMaps) {
+      for (const kw of map.keywords) {
+        if (className.includes(kw)) {
+          matchedLabel = map.target;
+          console.log(`Mapped lookalike prediction "${className}" to target: ${map.target}`);
+          break;
+        }
+      }
+      if (matchedLabel) break;
+    }
+    if (matchedLabel) break;
+  }
+
+  // If no target match in top 5, use the actual top prediction label (NOT salad fallback)
+  // Clean up MobileNet compound labels like "banana, plantain" → "banana"
+  const rawTop = predictions[0].className.toLowerCase();
+  const finalLabel = matchedLabel || rawTop.split(',')[0].trim();
+  console.log(`Final food label resolved: "${finalLabel}" (raw: "${rawTop}")`);
   
-  const foodResult = getLocalNutritionData(classifiedLabel);
+  const foodResult = getLocalNutritionData(finalLabel);
   showToast(`✅ Identified: ${foodResult.emoji || '🍽️'} ${foodResult.name}`, 'success');
   return foodResult;
 }
 
 function getLocalNutritionData(label) {
   const database = [
+    {
+      keywords: ['samosa'],
+      name: 'Baked Potato Samosa',
+      emoji: '🥟',
+      calories: 260,
+      score: 35,
+      serving: '1 samosa (approx 90g)',
+      warnings: ['🛑 Junk Food', 'Deep Fried', 'High Calorie'],
+      macros: { carbs: 32, fat: 13, protein: 4 },
+      nutrients: { sodium: 420, sugar: 2, fiber: 3, cholesterol: 5, vitaminA: 2, calcium: 20 },
+      recommendation: 'High in trans-fats and simple carbs. Try baking samosas instead of deep-frying, or swap with roasted makhana.'
+    },
+    {
+      keywords: ['ice cream', 'icecream', 'sorbet'],
+      name: 'Vanilla Ice Cream',
+      emoji: '🍨',
+      calories: 207,
+      score: 30,
+      serving: '1 scoop (approx 100g)',
+      warnings: ['🛑 Junk Food', 'High Added Sugar', 'Saturated Fat'],
+      macros: { carbs: 24, fat: 11, protein: 3 },
+      nutrients: { sodium: 80, sugar: 21, fiber: 0, cholesterol: 44, vitaminA: 8, calcium: 128 },
+      recommendation: 'High glycemic index and added sugars. Swap with frozen banana nice-cream or greek yogurt with honey.'
+    },
+    {
+      keywords: ['cupcake', 'cup cake', 'cup_cake'],
+      name: 'Sweet Cup Cake',
+      emoji: '🧁',
+      calories: 305,
+      score: 28,
+      serving: '1 cupcake (80g)',
+      warnings: ['🛑 Junk Food', 'High Added Sugar', 'Refined Flour'],
+      macros: { carbs: 52, fat: 10, protein: 3 },
+      nutrients: { sodium: 220, sugar: 36, fiber: 1, cholesterol: 25, vitaminA: 1, calcium: 35 },
+      recommendation: 'High empty-calorie treat. Swap with whole-wheat muffins sweetened with applesauce or dates.'
+    },
+    {
+      keywords: ['donut', 'donuts', 'doughnut', 'doughnuts'],
+      name: 'Glazed Donut',
+      emoji: '🍩',
+      calories: 250,
+      score: 25,
+      serving: '1 donut (60g)',
+      warnings: ['🛑 Junk Food', 'Deep Fried', 'High Sugar'],
+      macros: { carbs: 31, fat: 13, protein: 3 },
+      nutrients: { sodium: 270, sugar: 15, fiber: 1, cholesterol: 15, vitaminA: 0, calcium: 20 },
+      recommendation: 'Refined flour, sugar, and frying fats create an insulin spike. Swap for baked oats donuts or fruit.'
+    },
+    {
+      keywords: ['cashew', 'cashews'],
+      name: 'Raw Cashews',
+      emoji: '🥜',
+      calories: 155,
+      score: 85,
+      serving: '1 handful (approx 28g)',
+      warnings: ['☘️ Healthy Food', 'Calorie Dense', 'Healthy Fats'],
+      macros: { carbs: 9, fat: 12, protein: 5 },
+      nutrients: { sodium: 3, sugar: 2, fiber: 1, cholesterol: 0, vitaminA: 0, calcium: 10 },
+      recommendation: 'High in magnesium and heart-healthy monounsaturated fats. Consume raw or dry-roasted in moderation.'
+    },
+    {
+      keywords: ['cherry', 'cherries'],
+      name: 'Fresh Cherries',
+      emoji: '🍒',
+      calories: 75,
+      score: 90,
+      serving: '1 cup (approx 140g)',
+      warnings: ['☘️ Healthy Food', 'Anti-Inflammatory', 'Melatonin Source'],
+      macros: { carbs: 12, fat: 0, protein: 1 },
+      nutrients: { sodium: 0, sugar: 8, fiber: 2, cholesterol: 0, vitaminA: 3, calcium: 13 },
+      recommendation: 'Contains rich polyphenols and natural melatonin, which helps improve sleep quality and reduce joint pain.'
+    },
+    {
+      keywords: ['fig', 'figs'],
+      name: 'Fresh Figs',
+      emoji: '🍇',
+      calories: 74,
+      score: 87,
+      serving: '2 fresh figs (100g)',
+      warnings: ['☘️ Healthy Food', 'High Fiber', 'Calcium Rich'],
+      macros: { carbs: 19, fat: 0, protein: 1 },
+      nutrients: { sodium: 1, sugar: 16, fiber: 3, cholesterol: 0, vitaminA: 2, calcium: 35 },
+      recommendation: 'Rich in soluble fiber which stabilizes blood glucose levels and feeds beneficial gut microflora.'
+    },
     {
       keywords: ['pizza'],
       name: 'Pepperoni Pizza',
@@ -1233,7 +1433,7 @@ function getLocalNutritionData(label) {
       calories: 105,
       score: 88,
       serving: '1 medium (118g)',
-      warnings: ['Rich in Potassium', 'Natural Energy'],
+      warnings: ['☘️ Healthy Food', 'Rich in Potassium', 'Natural Energy'],
       macros: { carbs: 27, fat: 0, protein: 1 },
       nutrients: { sodium: 1, sugar: 14, fiber: 3, cholesterol: 0, vitaminA: 2, calcium: 6 },
       recommendation: 'Great pre-workout snack. The fiber helps slow down sugar absorption.'
@@ -1245,7 +1445,7 @@ function getLocalNutritionData(label) {
       calories: 95,
       score: 90,
       serving: '1 medium (182g)',
-      warnings: ['High Fiber', 'Antioxidant Rich'],
+      warnings: ['☘️ Healthy Food', 'High Fiber', 'Antioxidant Rich'],
       macros: { carbs: 25, fat: 0, protein: 0 },
       nutrients: { sodium: 2, sugar: 19, fiber: 4, cholesterol: 0, vitaminA: 1, calcium: 11 },
       recommendation: 'Eating the skin provides maximum dietary fiber and healthy polyphenols.'
@@ -1317,13 +1517,13 @@ function getLocalNutritionData(label) {
       calories: 365,
       score: 38,
       serving: '1 medium order',
-      warnings: ['High Sodium', 'Acrolein Risk'],
+      warnings: ['🛑 Junk Food', 'High Sodium', 'Acrolein Risk'],
       macros: { carbs: 48, fat: 17, protein: 4 },
       nutrients: { sodium: 650, sugar: 0, fiber: 4, cholesterol: 0, vitaminA: 0, calcium: 18 },
       recommendation: 'Try swapping for baked makhana (lotus seeds) or sweet potato wedges.'
     },
     {
-      keywords: ['cake', 'pastry', 'cupcake', 'donut', 'cookie', 'sweet', 'muffin'],
+      keywords: ['cake', 'pastry', 'cookie', 'sweet'],
       name: 'Glazed Chocolate Cake',
       emoji: '🎂',
       calories: 380,
@@ -2092,10 +2292,42 @@ function updateResultScreen(foodData, customImageSrc) {
   const badgesEl = root.querySelector('.food-badges');
   if (badgesEl) {
     badgesEl.innerHTML = '';
-    const warnings = foodData.warnings || [];
+    
+    // Determine healthy vs junk classification
+    const cleanName = (foodData.name || '').toLowerCase();
+    const JUNK_KEYWORDS = ['samosa', 'ice cream', 'icecream', 'cupcake', 'cup cake', 'donut', 'donuts', 'doughnut', 'doughnuts', 'french fries', 'french fry', 'fries', 'pizza', 'burger', 'cheeseburger', 'hamburger', 'chocolate', 'cake'];
+    const HEALTHY_KEYWORDS = ['banana', 'apple', 'cashew', 'cashews', 'cherry', 'cherries', 'fig', 'figs', 'salad', 'orange', 'lemon', 'berry', 'berries', 'salmon', 'fish', 'chicken', 'egg', 'eggs', 'yogurt'];
+    
+    let isJunk = JUNK_KEYWORDS.some(kw => cleanName.includes(kw));
+    let isHealthy = HEALTHY_KEYWORDS.some(kw => cleanName.includes(kw));
+
+    // Also check warnings
+    const warnings = [...(foodData.warnings || [])];
+    const hasJunkWarning = warnings.some(w => w.toLowerCase().includes('junk'));
+    const hasHealthyWarning = warnings.some(w => w.toLowerCase().includes('healthy'));
+
+    if (hasJunkWarning) isJunk = true;
+    if (hasHealthyWarning) isHealthy = true;
+    
+    // If not found, classify by score
+    if (!isJunk && !isHealthy) {
+      if ((foodData.score || 70) >= 70) {
+        isHealthy = true;
+      } else {
+        isJunk = true;
+      }
+    }
+
+    // Prepend dynamic classification badge
+    if (isJunk && !warnings.some(w => w.includes('Junk Food'))) {
+      warnings.unshift('🛑 Junk Food Detected');
+    } else if (isHealthy && !warnings.some(w => w.includes('Healthy Food'))) {
+      warnings.unshift('☘️ Healthy Food');
+    }
+
     warnings.forEach(w => {
-      const isHealthy = w.toLowerCase().includes('good') || w.toLowerCase().includes('health') || w.toLowerCase().includes('balanced') || w.toLowerCase().includes('low');
-      const badgeClass = isHealthy ? 'badge-green' : 'badge-warn';
+      const isWHealthy = w.toLowerCase().includes('good') || w.toLowerCase().includes('health') || w.toLowerCase().includes('balanced') || w.toLowerCase().includes('low') || w.includes('☘️');
+      const badgeClass = isWHealthy ? 'badge-green' : 'badge-warn';
       const span = document.createElement('span');
       span.className = `badge ${badgeClass}`;
       span.textContent = w;

@@ -3,17 +3,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firebase_db_service.dart';
 import '../services/gemini_service.dart';
 import '../services/ml_kit_service.dart';
+import '../services/ollama_service.dart';
+import '../services/firebase_ai_service.dart';
 import '../models/food_item.dart';
 
 class ScannerProvider with ChangeNotifier {
   final FirebaseDbService _dbService = FirebaseDbService();
   final GeminiService _geminiService = GeminiService();
   final MLKitService _mlKitService = MLKitService();
+  final OllamaService _ollamaService = OllamaService();
+  final FirebaseAiService _firebaseAiService = FirebaseAiService();
 
   List<FoodItem> _scanHistory = [];
   bool _isLoading = false;
   String _geminiApiKey = '';
-  String _scannerEngine = 'gemini'; // 'gemini' or 'cnn'
+  String _scannerEngine = 'gemini'; // 'gemini', 'cnn', or 'ollama'
+  String _ollamaHost = 'http://192.168.1.5:11434';
+  String _ollamaModel = 'minicpm-v';
 
   int _dailyCalories = 0;
   double _dailyWater = 0.0;
@@ -25,6 +31,9 @@ class ScannerProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String get geminiApiKey => _geminiApiKey;
   String get scannerEngine => _scannerEngine;
+  String get ollamaHost => _ollamaHost;
+  String get ollamaModel => _ollamaModel;
+  OllamaService get ollamaService => _ollamaService;
 
   int get dailyCalories => _dailyCalories;
   double get dailyWater => _dailyWater;
@@ -40,6 +49,8 @@ class ScannerProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _geminiApiKey = prefs.getString('GEMINI_API_KEY') ?? '';
     _scannerEngine = prefs.getString('SCANNER_ENGINE') ?? 'gemini';
+    _ollamaHost = prefs.getString('OLLAMA_HOST') ?? 'http://192.168.1.5:11434';
+    _ollamaModel = prefs.getString('OLLAMA_MODEL') ?? 'minicpm-v';
     notifyListeners();
   }
 
@@ -54,6 +65,15 @@ class ScannerProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('SCANNER_ENGINE', val);
     _scannerEngine = val;
+    notifyListeners();
+  }
+
+  Future<void> saveOllamaSettings(String host, String model) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('OLLAMA_HOST', host.trim());
+    await prefs.setString('OLLAMA_MODEL', model.trim());
+    _ollamaHost = host.trim();
+    _ollamaModel = model.trim();
     notifyListeners();
   }
 
@@ -104,7 +124,22 @@ class ScannerProvider with ChangeNotifier {
 
     try {
       final FoodItem item;
-      if (_scannerEngine == 'cnn' && filePath != null) {
+      if (_scannerEngine == 'firebase') {
+        item = await _firebaseAiService.analyzeFoodImage(
+          base64Image: base64Image,
+          mimeType: mimeType,
+          riskProfile: riskProfile,
+          filePath: filePath,
+        );
+      } else if (_scannerEngine == 'ollama') {
+        item = await _ollamaService.analyzeFoodImage(
+          ollamaHost: _ollamaHost,
+          modelName: _ollamaModel,
+          base64Image: base64Image,
+          riskProfile: riskProfile,
+          filePath: filePath,
+        );
+      } else if (_scannerEngine == 'cnn' && filePath != null) {
         item = await _mlKitService.analyzeImage(
           filePath: filePath,
           riskProfile: riskProfile,

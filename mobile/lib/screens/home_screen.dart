@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // AI Health Score Banner
               Card(
-                color: const Color(0xFF1E293B).withOpacity(0.8),
+                color: const Color(0xFF1E293B).withValues(alpha: 0.8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -95,12 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             const Text("AI Health Score", style: TextStyle(color: Colors.white60, fontSize: 13)),
                             const SizedBox(height: 4),
-                            const Text("87/100", style: TextStyle(fontSize: 32, fontWeight: FontWeight.extrabold, color: Colors.white)),
+                            const Text("87/100", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Colors.white)),
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.2),
+                                color: const Color(0xFF10B981).withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Text(
@@ -200,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 "No scans saved yet. Tap Scanner below to log food!",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.white50),
+                                style: TextStyle(color: Colors.white54),
                               ),
                             ),
                           ),
@@ -318,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("Close", style: TextStyle(color: Colors.white50)),
+                  child: const Text("Close", style: TextStyle(color: Colors.white54)),
                 ),
                 ElevatedButton(
                   onPressed: scanner.isLoading

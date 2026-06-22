@@ -1,0 +1,19 @@
+{
+  "name": "nutriai-functions",
+  "version": "1.0.0",
+  "description": "NutriAI Firebase Cloud Functions — AI food scanner powered by Gemini 2.0 Flash Vision",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.0.0",
+    "firebase-admin": "^12.0.0",
+    "@google/generative-ai": "^0.21.0"
+  },
+  "private": true
+}
