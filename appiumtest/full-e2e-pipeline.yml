@@ -86,7 +86,7 @@ jobs:
 
       - name: Generate E2E Test Report
         run: |
-          python update_template.py
+          python appiumtest/update_template.py
           TIMESTAMP=$(date +"%Y-%m-%dT%H-%M-%S")
           NEW_FILENAME="E2E_Test_Results_TMS_${TIMESTAMP}.xlsx"
           mv E2E_Test_Results_TMS_Final.xlsx $NEW_FILENAME
@@ -94,11 +94,11 @@ jobs:
 
       - name: Generate Vulnerability Report
         run: |
-          python tests/generate_vulnerability_report.py
+          python appiumtest/generate_vulnerability_report.py
 
       - name: Publish Test Results to Job Summary
         run: |
-          python tests/publish_results.py
+          python appiumtest/publish_results.py
 
       - name: Upload E2E Test Report
         uses: actions/upload-artifact@v4
@@ -135,7 +135,7 @@ jobs:
 
       - name: Run Load Test and Generate Summary
         run: |
-          python load_test.py > load_test_output.txt
+          python appiumtest/load_test.py > load_test_output.txt
           cat load_test_output.txt
           
           REPORT_FILE=$(grep -o 'Load_Test_Report_.*\.xlsx' load_test_output.txt)
